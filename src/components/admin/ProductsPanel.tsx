@@ -32,7 +32,8 @@ const ProductsPanel: React.FC = () => {
   const [products, setProducts] = useState<Prod[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [media, setMedia] = useState<Media[]>([]);
-  const [editing, setEditing] = useState<Prod | null>(null);
+  const [draftProduct, setDraftProduct] = useState < Prod | null > (null);
+const [dirty, setDirty] = useState(false);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
   const [confirming, setConfirming] = useState<Prod | null>(null);
@@ -61,13 +62,81 @@ const ProductsPanel: React.FC = () => {
     setEditing(base);
   };
 
-  const setMd = (patch: any) => editing && setEditing({ ...editing, metadata: { ...editing.metadata, ...patch } });
+  const setMetadata = (patch:any)=>{
+
+setDraftProduct(prev=>{
+
+if(!prev) return prev;
+
+setDirty(true);
+
+return{
+
+...prev,
+
+metadata:{
+
+...prev.metadata,
+
+...patch
+
+}
+
+}
+
+})
+
+}
 
   const save = async () => {
-    if (!editing?.name) return;
-    setBusy(true);
-    await cms('cms_product_save', { product: editing });
-    setBusy(false); setEditing(null); load();
+    if(!draftProduct) return;
+
+const payload=structuredClone(draftProduct);
+
+payload.tags=(payload.tags||"")
+
+.toString()
+
+.split(",")
+
+.map((x:string)=>x.trim())
+
+.filter(Boolean);
+
+await cms(
+
+'cms_product_save',
+
+{
+
+product:payload
+
+}
+
+);
+
+setDirty(false);
+
+setDraftProduct(null);
+
+load();
+   const closeEditor=()=>{
+
+if(dirty){
+
+if(!window.confirm(
+
+"You have unsaved changes. Discard them?"
+
+))
+
+return;
+
+}
+
+setDraftProduct(null);
+
+}
   };
   const confirmDelete = async () => {
     if (!confirming?.id) return;
@@ -86,16 +155,78 @@ const ProductsPanel: React.FC = () => {
     try {
       const urls: string[] = [];
       for (const f of Array.from(files)) urls.push(await uploadMedia(f, 'product'));
-      setEditing((prev) => prev ? { ...prev, images: [...(prev.images || []), ...urls] } : prev);
+      setDraftProduct(prev=>{
+
+if(!prev) return prev;
+
+return{
+
+...prev,
+
+images:[
+
+...(prev.images||[]),
+
+...urls
+
+]
+
+}
+
+})
       loadMedia();
     } finally { setUploading(false); }
   };
-  const removeImage = (i: number) => editing && setEditing({ ...editing, images: editing.images!.filter((_, x) => x !== i) });
-  const toggleFromMedia = (url: string) => {
-    if (!editing) return;
-    const imgs = editing.images || [];
-    setEditing({ ...editing, images: imgs.includes(url) ? imgs.filter((u) => u !== url) : [...imgs, url] });
-  };
+  const removeImage=(index:number)=>{
+
+setDraftProduct(prev=>{
+
+if(!prev) return prev;
+
+const images=[...(prev.images||[])];
+
+images.splice(index,1);
+
+return{
+
+...prev,
+
+images
+
+}
+
+})
+
+setDirty(true);
+
+}
+  const toggleFromMedia = (url:string)=>{
+
+setDraftProduct(prev=>{
+
+if(!prev) return prev;
+
+const images=[...(prev.images||[])];
+
+const exists=images.includes(url);
+
+return{
+
+...prev,
+
+images:exists
+
+?images.filter(x=>x!==url)
+
+:[...images,url]
+
+}
+
+})
+
+setDirty(true);
+
+}
 
   // ---- categories multiselect ----
   const toggleCat = (id: string) => {
@@ -115,7 +246,18 @@ const ProductsPanel: React.FC = () => {
     if (!cur.includes(s)) setMd({ sizes: [...cur, s] });
     setCustomSize('');
   };
-
+   const updateProduct = (patch: Partial < Prod > ) => {
+  setDraftProduct(prev => {
+    if (!prev) return prev;
+    
+    setDirty(true);
+    
+    return {
+      ...prev,
+      ...patch
+    };
+  });
+};
   // ---- add-ons ----
   const toggleAddon = (i: number) => {
     const list = [...(editing?.metadata?.addons || [])];
@@ -419,5 +561,40 @@ const ProductsPanel: React.FC = () => {
     </div>
   );
 };
+<div className="fixed bottom-0 left-0 right-0 border-t bg-white p-4 flex justify-end gap-3">
+
+{dirty&&
+
+<span>
+
+Unsaved Changes
+
+</span>
+
+}
+
+<button
+
+onClick={closeEditor}
+
+>
+
+Cancel
+
+</button>
+
+<button
+
+disabled={!dirty}
+
+onClick={save}
+
+>
+
+Save
+
+</button>
+
+</div>
 
 export default ProductsPanel;
