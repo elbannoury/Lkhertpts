@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { cms, uploadMedia, isOwner } from './cms';
 import ConfirmDialog from './ConfirmDialog';
 import { formatMAD } from '@/data/catalog';
@@ -45,12 +45,14 @@ const ProductsPanel: React.FC = () => {
   const [customSize, setCustomSize] = useState('');
   const owner = isOwner();
 
+  // تخزين المنتج الأصلي للمقارنة أثناء التعديل
+  const originalProductRef = useRef<Prod | null>(null);
+
   const load = async () => { const r = await cms('cms_products_list'); setProducts(r.products || []); };
   const loadCats = async () => { const r = await cms('cms_categories_list'); setCats(r.categories || []); };
   const loadMedia = async () => { const r = await cms('cms_media_list'); setMedia(r.media || []); };
   useEffect(() => { load(); loadCats(); loadMedia(); }, []);
 
-  // Helper to update draftProduct and set dirty
   const updateDraft = (updater: (prev: Prod) => Prod) => {
     setDraftProduct((prev) => {
       if (!prev) return prev;
@@ -59,7 +61,6 @@ const ProductsPanel: React.FC = () => {
     });
   };
 
-  // Helper to update metadata only
   const setMd = (patch: any) => {
     updateDraft((prev) => ({
       ...prev,
@@ -68,13 +69,28 @@ const ProductsPanel: React.FC = () => {
   };
 
   const open = (p?: Prod) => {
-    const base = p ? { ...p, tags: Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || ''), variants: p.variants || [] } : { ...empty };
+    // حفظ نسخة من المنتج الأصلي للاستفادة منها في تبديل المتغيرات
+    originalProductRef.current = p ? { ...p, variants: [...(p.variants || [])] } : null;
+
+    const base = p
+      ? {
+          ...p,
+          tags: Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || ''),
+          variants: p.variants || [],
+        }
+      : { ...empty };
+
     const md = base.metadata || {};
+    // الحل: دمج الحقول المطلوبة فقط دون مسح باقي الميتاداتا
     base.metadata = {
+      ...md, // نحافظ على كل الحقول الأصلية (مثل media_source ...)
       categories: Array.isArray(md.categories) ? md.categories : [],
       sizes: Array.isArray(md.sizes) ? md.sizes : [],
-      addons: Array.isArray(md.addons) && md.addons.length ? md.addons : DEFAULT_ADDONS.map((a) => ({ ...a })),
+      addons: Array.isArray(md.addons) && md.addons.length
+        ? md.addons
+        : DEFAULT_ADDONS.map((a) => ({ ...a })),
     };
+
     setDraftProduct(base);
     setDirty(false);
   };
@@ -85,6 +101,7 @@ const ProductsPanel: React.FC = () => {
     }
     setDraftProduct(null);
     setDirty(false);
+    originalProductRef.current = null;
   };
 
   const save = async () => {
@@ -100,6 +117,7 @@ const ProductsPanel: React.FC = () => {
       await cms('cms_product_save', { product: payload });
       setDirty(false);
       setDraftProduct(null);
+      originalProductRef.current = null;
       load();
     } catch (e: any) {
       alert(e?.message || 'Error saving product');
@@ -111,14 +129,22 @@ const ProductsPanel: React.FC = () => {
   const confirmDelete = async () => {
     if (!confirming?.id) return;
     setDelBusy(true);
-    try { await cms('cms_product_delete', { id: confirming.id }); setConfirming(null); load(); }
-    catch (e: any) { alert(e?.message || 'Could not delete product'); }
-    finally { setDelBusy(false); }
+    try {
+      await cms('cms_product_delete', { id: confirming.id });
+      setConfirming(null);
+      load();
+    } catch (e: any) {
+      alert(e?.message || 'Could not delete product');
+    } finally {
+      setDelBusy(false);
+    }
   };
   const dup = async (id?: string) => { await cms('cms_product_duplicate', { id }); load(); };
-  const archive = async (p: Prod) => { await cms('cms_product_archive', { id: p.id, status: p.status === 'archived' ? 'active' : 'archived' }); load(); };
+  const archive = async (p: Prod) => {
+    await cms('cms_product_archive', { id: p.id, status: p.status === 'archived' ? 'active' : 'archived' });
+    load();
+  };
 
-  // ---- multi image upload ----
   const addImages = async (files?: FileList | null) => {
     if (!files || !draftProduct) return;
     setUploading(true);
@@ -130,7 +156,9 @@ const ProductsPanel: React.FC = () => {
         images: [...(prev.images || []), ...urls],
       }));
       loadMedia();
-    } finally { setUploading(false); }
+    } finally {
+      setUploading(false);
+    }
   };
   const removeImage = (index: number) => {
     updateDraft((prev) => ({
@@ -148,13 +176,11 @@ const ProductsPanel: React.FC = () => {
     });
   };
 
-  // ---- categories multiselect ----
   const toggleCat = (id: string) => {
     const cur = draftProduct?.metadata?.categories || [];
     setMd({ categories: cur.includes(id) ? cur.filter((c: string) => c !== id) : [...cur, id] });
   };
 
-  // ---- sizes multiselect ----
   const toggleSize = (s: string) => {
     const cur = draftProduct?.metadata?.sizes || [];
     setMd({ sizes: cur.includes(s) ? cur.filter((x: string) => x !== s) : [...cur, s] });
@@ -167,7 +193,6 @@ const ProductsPanel: React.FC = () => {
     setCustomSize('');
   };
 
-  // ---- add-ons ----
   const toggleAddon = (i: number) => {
     const list = [...(draftProduct?.metadata?.addons || [])];
     list[i] = { ...list[i], enabled: !list[i].enabled };
@@ -192,25 +217,42 @@ const ProductsPanel: React.FC = () => {
     setNewAddon({ label: '', price: 0 });
   };
 
-  // ---- variants ----
+  // ---- variants (محسّنة) ----
   const toggleVariant = (material: string, size: string) => {
     if (!draftProduct) return;
     const title = `${material} · ${size}`;
-    const variants = draftProduct.variants || [];
-    const exists = variants.find((v) => v.title === title);
-    const newVariants = exists
-      ? variants.filter((v) => v.title !== title)
-      : [...variants, { title, option1: size, option2: material, price: draftProduct.price, inventory_qty: 10 }];
-    updateDraft((prev) => ({
-      ...prev,
-      variants: newVariants,
-      has_variants: newVariants.length > 0,
-    }));
+    const currentVariants = draftProduct.variants || [];
+    const exists = currentVariants.find((v) => v.title === title);
+
+    if (exists) {
+      // إزالة المتغير
+      updateDraft((prev) => ({
+        ...prev,
+        variants: prev.variants?.filter((v) => v.title !== title) || [],
+        has_variants: (prev.variants?.length || 1) > 1,
+      }));
+    } else {
+      // إضافة المتغير مع سعر افتراضي، مع الاحتفاظ بالبيانات القديمة إن وُجدت في المنتج الأصلي
+      const original = originalProductRef.current?.variants?.find((v) => v.title === title);
+      const newVariant: Variant = {
+        title,
+        option1: size,
+        option2: material,
+        price: original ? original.price : draftProduct.price,
+        inventory_qty: original ? original.inventory_qty : 10,
+      };
+      updateDraft((prev) => ({
+        ...prev,
+        variants: [...(prev.variants || []), newVariant],
+        has_variants: true,
+      }));
+    }
   };
 
-  const filtered = products.filter((p) =>
-    (statusFilter === 'all' || p.status === statusFilter) &&
-    (p.name.toLowerCase().includes(q.toLowerCase()) || (p.handle || '').includes(q.toLowerCase()))
+  const filtered = products.filter(
+    (p) =>
+      (statusFilter === 'all' || p.status === statusFilter) &&
+      (p.name.toLowerCase().includes(q.toLowerCase()) || (p.handle || '').includes(q.toLowerCase()))
   );
   const countBy = (s: string) => products.filter((p) => p.status === s).length;
   const tops = cats.filter((c) => !c.parent_id);
@@ -297,7 +339,7 @@ const ProductsPanel: React.FC = () => {
                 <textarea value={draftProduct.description || ''} onChange={(e) => updateDraft((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 col-span-2 h-20 focus:border-[#FF6A00] outline-none" />
               </div>
 
-              {/* CATEGORIES multi-select */}
+              {/* CATEGORIES */}
               <section>
                 <div className="flex items-center gap-2 mb-3"><Tag size={15} className="text-[#FF6A00]" /><h4 className="font-medium text-sm">Categories <span className="text-[#aaa] font-normal">(select one or more)</span></h4></div>
                 {tops.length === 0 ? <p className="text-xs text-[#aaa]">No categories yet — create them in the Categories tab.</p> : (
@@ -328,7 +370,7 @@ const ProductsPanel: React.FC = () => {
                 )}
               </section>
 
-              {/* IMAGES — multi upload + media picker */}
+              {/* IMAGES */}
               <section>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2"><ImageIcon size={15} className="text-[#FF6A00]" /><h4 className="font-medium text-sm">Images</h4></div>
@@ -352,7 +394,7 @@ const ProductsPanel: React.FC = () => {
                 </div>
               </section>
 
-              {/* SIZES multi-select */}
+              {/* SIZES */}
               <section>
                 <div className="flex items-center gap-2 mb-3"><Ruler size={15} className="text-[#FF6A00]" /><h4 className="font-medium text-sm">Available Sizes</h4></div>
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -467,7 +509,6 @@ const ProductsPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Designed delete confirmation — deletes only this product */}
       <ConfirmDialog
         open={!!confirming}
         title={`Delete “${confirming?.name || ''}”?`}
