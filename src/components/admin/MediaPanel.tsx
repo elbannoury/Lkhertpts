@@ -1,20 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { cms, uploadMedia, isOwner } from './cms';
 import ConfirmDialog from './ConfirmDialog';
-import { Upload, Trash2, Search, Copy, Check, Download, Film, CheckSquare, Square, PackagePlus, X, PencilLine } from 'lucide-react';
+import { Upload, Trash2, Search, Copy, Check, Download, Film, CheckSquare, Square, PackagePlus, X } from 'lucide-react';
+
 
 const isVideo = (m: any) => {
   const u = (m.url || '').toLowerCase();
   return /\.(mp4|webm|mov|m4v|ogg)(\?|$)/.test(u) || (m.category || '').includes('video');
-};
-
-const emptyCreateForm = {
-  name: '',
-  product_type: 'Artwork',
-  status: 'draft',
-  description: '',
-  tags: 'from-media',
-  price: '',
 };
 
 const MediaPanel: React.FC = () => {
@@ -27,18 +19,14 @@ const MediaPanel: React.FC = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createBusy, setCreateBusy] = useState(false);
-  const [createForm, setCreateForm] = useState(emptyCreateForm);
   const fileRef = useRef<HTMLInputElement>(null);
   const owner = isOwner();
+  // Confirmation dialog state: holds the single item OR a bulk batch to delete.
   const [confirmDel, setConfirmDel] = useState<{ kind: 'one'; item: any } | { kind: 'bulk'; items: any[] } | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
-  const load = async () => {
-    const r = await cms('cms_media_list');
-    setMedia(r.media || []);
-  };
+
+  const load = async () => { const r = await cms('cms_media_list'); setMedia(r.media || []); };
   useEffect(() => { load(); }, []);
 
   const onFiles = async (files?: FileList | null) => {
@@ -47,15 +35,10 @@ const MediaPanel: React.FC = () => {
     for (const f of Array.from(files)) {
       try { await uploadMedia(f, 'library'); } catch (e: any) { alert(e?.message || 'Upload failed'); }
     }
-    setUploading(false);
-    load();
+    setUploading(false); load();
   };
 
-  const copy = (url: string) => {
-    navigator.clipboard.writeText(url);
-    setCopied(url);
-    setTimeout(() => setCopied(null), 1500);
-  };
+  const copy = (url: string) => { navigator.clipboard.writeText(url); setCopied(url); setTimeout(() => setCopied(null), 1500); };
 
   const downloadOne = async (m: any) => {
     try {
@@ -64,57 +47,41 @@ const MediaPanel: React.FC = () => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = m.name || m.url.split('/').pop() || 'download';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 4000);
     } catch {
       window.open(m.url, '_blank');
     }
   };
 
-  const download = async (m: any) => {
-    setBusy(m.id);
-    try { await downloadOne(m); } finally { setBusy(null); }
-  };
+  const download = async (m: any) => { setBusy(m.id); try { await downloadOne(m); } finally { setBusy(null); } };
 
+  // Open the designed confirm window for a SINGLE image only. We require a real
+  // id up front so a delete can never target "everything" by accident.
   const del = (m: any) => {
-    if (!m?.id) {
-      setNotice('This item can’t be deleted (missing id). Try refreshing the media library.');
-      setTimeout(() => setNotice(null), 3000);
-      return;
-    }
+    if (!m?.id) { setNotice('This item can’t be deleted (missing id). Try refreshing the media library.'); setTimeout(() => setNotice(null), 3000); return; }
     setConfirmDel({ kind: 'one', item: m });
   };
 
-  const toggle = (id: string) => {
-    setSelected((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
-  };
 
+
+  // ── Selection helpers ─────────────────────────────────────────────
+  const toggle = (id: string) => {
+    setSelected((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  };
   const filtered = media.filter((m) => (m.name || '').toLowerCase().includes(q.toLowerCase()));
   const allSelected = filtered.length > 0 && filtered.every((m) => selected.has(m.id));
   const selectAll = () => {
     if (allSelected) setSelected(new Set());
     else setSelected(new Set(filtered.map((m) => m.id)));
   };
-  const exitSelect = () => {
-    setSelectMode(false);
-    setSelected(new Set());
-    setCreateOpen(false);
-  };
+  const exitSelect = () => { setSelectMode(false); setSelected(new Set()); };
   const selectedItems = () => media.filter((m) => selected.has(m.id));
-  const selectedImages = () => selectedItems().filter((m) => !isVideo(m));
 
+  // ── Bulk actions ──────────────────────────────────────────────────
   const bulkDownload = async () => {
     setBulkBusy(true);
-    for (const m of selectedItems()) {
-      await downloadOne(m);
-      await new Promise((r) => setTimeout(r, 350));
-    }
+    for (const m of selectedItems()) { await downloadOne(m); await new Promise((r) => setTimeout(r, 350)); }
     setBulkBusy(false);
   };
 
@@ -124,11 +91,13 @@ const MediaPanel: React.FC = () => {
     setConfirmDel({ kind: 'bulk', items });
   };
 
+  // Runs the actual delete once the user confirms in the designed window.
   const runConfirmedDelete = async () => {
     if (!confirmDel) return;
     setConfirmBusy(true);
     try {
       if (confirmDel.kind === 'one') {
+        // Deletes EXACTLY one row by its id — other media are never affected.
         await cms('cms_media_delete', { id: confirmDel.item.id });
       } else {
         await cms('cms_media_delete_many', { ids: confirmDel.items.map((m) => m.id) });
@@ -143,79 +112,19 @@ const MediaPanel: React.FC = () => {
     }
   };
 
-  const openCreateProduct = () => {
-    const imgs = selectedImages();
-    if (!imgs.length) {
-      setNotice('Select at least one image (not video) to build a product.');
-      setTimeout(() => setNotice(null), 3000);
-      return;
-    }
-    const guessedName = (imgs[0]?.name || 'New artwork').replace(/\.[^.]+$/, '');
-    setCreateForm({
-      ...emptyCreateForm,
-      name: guessedName || 'New artwork',
-      product_type: 'Artwork',
-      tags: 'from-media',
-    });
-    setCreateOpen(true);
-  };
 
   const createProduct = async () => {
-    const imgs = selectedImages();
-    if (!imgs.length) {
-      setNotice('Select at least one image (not video) to build a product.');
-      setTimeout(() => setNotice(null), 3000);
-      return;
-    }
-    if (!createForm.name.trim()) {
-      setNotice('Add a product name before saving the draft.');
-      setTimeout(() => setNotice(null), 3000);
-      return;
-    }
-
-    const mediaOrigins = imgs.map((m, index) => ({
-      media_id: m.id,
-      url: m.url,
-      name: m.name || `media-${index + 1}`,
-      origin: 'media',
-      position: index,
-      selected_at: new Date().toISOString(),
-    }));
-
-    const product = {
-      name: createForm.name.trim(),
-      product_type: createForm.product_type.trim() || 'Artwork',
-      description: createForm.description.trim(),
-      status: createForm.status || 'draft',
-      tags: createForm.tags,
-      price: Math.round(Number(createForm.price || 0) * 100),
-      images: mediaOrigins.map((m) => m.url),
-      metadata: {
-        categories: [],
-        sizes: [],
-        addons: [],
-        created_from_media: true,
-        source: 'media-library',
-        source_media_ids: mediaOrigins.map((m) => m.media_id),
-        source_media: mediaOrigins,
-        image_origin_map: mediaOrigins,
-      },
-      variants: [],
-      has_variants: false,
-    };
-
-    setCreateBusy(true);
+    const imgs = selectedItems().filter((m) => !isVideo(m)).map((m) => m.url);
+    if (!imgs.length) { setNotice('Select at least one image (not video) to build a product.'); setTimeout(() => setNotice(null), 3000); return; }
+    const name = prompt('Product name for the new draft:', 'New artwork');
+    if (name === null) return;
+    setBulkBusy(true);
     try {
-      await cms('cms_product_save', { product });
-      setNotice(`Draft product created with ${mediaOrigins.length} media image(s). Open Products to refine, duplicate, archive, or publish it.`);
-      setCreateOpen(false);
-      exitSelect();
-    } catch (e: any) {
-      setNotice(e?.message || 'Could not create product');
-    } finally {
-      setCreateBusy(false);
-      setTimeout(() => setNotice(null), 5000);
-    }
+      const r: any = await cms('cms_product_from_media', { images: imgs, name: name || 'New artwork' });
+      if (r?.ok) { setNotice('Draft product created with ' + imgs.length + ' image(s). Find it under Products to finish & publish.'); exitSelect(); }
+      else setNotice(r?.error || 'Could not create product');
+    } catch (e: any) { setNotice(e?.message || 'Could not create product'); }
+    finally { setBulkBusy(false); setTimeout(() => setNotice(null), 5000); }
   };
 
   return (
@@ -236,6 +145,7 @@ const MediaPanel: React.FC = () => {
         <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={(e) => onFiles(e.target.files)} />
       </div>
 
+      {/* Selection toolbar */}
       {selectMode && (
         <div className="sticky top-2 z-10 mb-5 flex items-center gap-3 flex-wrap bg-white border border-[#e6e0ff] shadow-sm rounded-xl px-4 py-3">
           <button onClick={selectAll} className="text-sm flex items-center gap-1.5 text-[#444] hover:text-[#6E44FF]">
@@ -243,17 +153,15 @@ const MediaPanel: React.FC = () => {
           </button>
           <span className="text-sm text-[#888]">{selected.size} selected</span>
           <div className="flex items-center gap-2 ml-auto">
-            <button onClick={openCreateProduct} disabled={!selected.size || bulkBusy} className="bg-[#C9A23F] text-black font-medium px-3.5 py-2 flex items-center gap-1.5 text-sm rounded-lg disabled:opacity-40 hover:bg-[#E8C766]">
+            <button onClick={createProduct} disabled={!selected.size || bulkBusy} className="bg-[#C9A23F] text-black font-medium px-3.5 py-2 flex items-center gap-1.5 text-sm rounded-lg disabled:opacity-40 hover:bg-[#E8C766]">
               <PackagePlus size={15} /> Create product
             </button>
             <button onClick={bulkDownload} disabled={!selected.size || bulkBusy} className="border border-[#ddd] px-3.5 py-2 flex items-center gap-1.5 text-sm rounded-lg disabled:opacity-40 hover:border-[#6E44FF]">
               <Download size={15} /> Download
             </button>
-            {(owner || true) && (
-              <button onClick={bulkDelete} disabled={!selected.size || bulkBusy} className="border border-red-200 text-red-500 px-3.5 py-2 flex items-center gap-1.5 text-sm rounded-lg disabled:opacity-40 hover:bg-red-50">
-                <Trash2 size={15} /> Delete
-              </button>
-            )}
+            <button onClick={bulkDelete} disabled={!selected.size || bulkBusy} className="border border-red-200 text-red-500 px-3.5 py-2 flex items-center gap-1.5 text-sm rounded-lg disabled:opacity-40 hover:bg-red-50">
+              <Trash2 size={15} /> Delete
+            </button>
           </div>
         </div>
       )}
@@ -264,7 +172,10 @@ const MediaPanel: React.FC = () => {
           const isSel = selected.has(m.id);
           return (
             <div key={m.id} className={`bg-white border rounded-xl overflow-hidden transition-shadow ${isSel ? 'border-[#6E44FF] ring-2 ring-[#6E44FF]/30' : 'border-[#eee]'} ${busy === m.id ? 'opacity-50 pointer-events-none' : ''}`}>
-              <div className={`relative aspect-square bg-[#0c0c0c] ${selectMode ? 'cursor-pointer' : ''}`} onClick={() => selectMode && toggle(m.id)}>
+              <div
+                className={`relative aspect-square bg-[#0c0c0c] ${selectMode ? 'cursor-pointer' : ''}`}
+                onClick={() => selectMode && toggle(m.id)}
+              >
                 {isVideo(m)
                   ? <video src={m.url} className="w-full h-full object-cover" muted />
                   : <img src={m.url} className="w-full h-full object-cover" loading="lazy" />}
@@ -294,75 +205,6 @@ const MediaPanel: React.FC = () => {
         })}
       </div>
 
-      {createOpen && (
-        <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4" onClick={() => !createBusy && setCreateOpen(false)}>
-          <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="px-5 py-4 border-b border-[#eee] flex items-center justify-between">
-              <div>
-                <h3 className="font-serif text-xl text-[#1D1D1D]">Create product from selected media</h3>
-                <p className="text-sm text-[#8D8D8D] mt-1">{selectedImages().length} image(s) will be saved in the same order shown in Media.</p>
-              </div>
-              <button onClick={() => !createBusy && setCreateOpen(false)} className="text-[#999] hover:text-black"><X size={18} /></button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-1.5">Product title</label>
-                  <input value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} placeholder="New artwork" className="w-full border border-[#ddd] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#6E44FF]" />
-                </div>
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-1.5">Type</label>
-                  <input value={createForm.product_type} onChange={(e) => setCreateForm({ ...createForm, product_type: e.target.value })} placeholder="Artwork" className="w-full border border-[#ddd] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#6E44FF]" />
-                </div>
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-1.5">Status</label>
-                  <select value={createForm.status} onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })} className="w-full border border-[#ddd] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#6E44FF]">
-                    <option value="draft">draft</option>
-                    <option value="active">active</option>
-                    <option value="archived">archived</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-1.5">Base price (MAD)</label>
-                  <input type="number" min="0" value={createForm.price} onChange={(e) => setCreateForm({ ...createForm, price: e.target.value })} placeholder="0" className="w-full border border-[#ddd] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#6E44FF]" />
-                </div>
-                <div>
-                  <label className="block text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-1.5">Tags</label>
-                  <input value={createForm.tags} onChange={(e) => setCreateForm({ ...createForm, tags: e.target.value })} placeholder="from-media, new" className="w-full border border-[#ddd] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#6E44FF]" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-1.5">Description</label>
-                  <textarea value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} placeholder="Optional description for the draft product" className="w-full h-24 border border-[#ddd] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#6E44FF]" />
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-[#8D8D8D] mb-2">Selected image order</p>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                  {selectedImages().map((m, index) => (
-                    <div key={m.id} className="relative aspect-square rounded-lg overflow-hidden border border-[#eee] bg-[#fafafa]">
-                      <img src={m.url} className="w-full h-full object-cover" />
-                      <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded">{index === 0 ? 'Cover' : index + 1}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t border-[#eee] flex items-center justify-between gap-3">
-              <p className="text-xs text-[#8D8D8D] flex items-center gap-1.5"><PencilLine size={14} /> Product will include media linkage metadata for later edits.</p>
-              <div className="flex items-center gap-2">
-                <button onClick={() => !createBusy && setCreateOpen(false)} className="px-4 py-2 text-sm text-[#777]">Cancel</button>
-                <button disabled={createBusy} onClick={createProduct} className="bg-[#6E44FF] text-white px-5 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-[#5a35e0]">
-                  {createBusy ? 'Saving draft…' : 'Create draft product'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       <ConfirmDialog
         open={!!confirmDel}
         title={confirmDel?.kind === 'bulk' ? 'Delete selected media?' : 'Delete this image?'}
@@ -377,6 +219,7 @@ const MediaPanel: React.FC = () => {
         onCancel={() => !confirmBusy && setConfirmDel(null)}
       />
     </div>
+
   );
 };
 
