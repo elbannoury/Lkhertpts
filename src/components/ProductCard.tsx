@@ -88,5 +88,24 @@ const ProductCard: React.FC<Props> = ({ product }) => {
     </Link>
   );
 };
+import { ProductCardActions } from "@/components/products/product-card-actions";
+
+export function ProductCard({ product }) {
+  return (
+    <div className="border rounded-lg p-4 relative">
+      {/* عرض الصورة والبيانات الأساسية */}
+      <img src={product.image_url} alt={product.title} className="w-full h-48 object-cover rounded" />
+      
+      <div className="flex justify-between items-center mt-2">
+        <h3 className="font-bold">{product.title}</h3>
+        
+        {/* هنا تضع المكون الذي أنشأناه ليظهر زر الخيارات */}
+        <ProductCardActions product={product} />
+      </div>
+      
+      <p className="text-emerald-600 font-semibold mt-1">${product.price}</p>
+    </div>
+  );
+}
 
 export default ProductCard;
