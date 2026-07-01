@@ -7,9 +7,21 @@ interface Props {
   title: string;
   products: any[];
   link?: string;
+  // 1. قمنا بإضافة الدوال هنا في الـ Interface لكي يقبلها المكون كـ Props
+  onDelete?: (id: string) => void;
+  onUpdate?: (id: string, updatedData: any) => void;
+  onDuplicate?: (product: any) => void;
 }
 
-const ProductRow: React.FC<Props> = ({ eyebrow, title, products, link }) => {
+const ProductRow: React.FC<Props> = ({ 
+  eyebrow, 
+  title, 
+  products, 
+  link,
+  onDelete,     // 2. استدعاء الدوال هنا من الـ Props
+  onUpdate,
+  onDuplicate
+}) => {
   if (!products?.length) return null;
   return (
     <section className="max-w-[1400px] mx-auto px-6 lg:px-10 py-20">
@@ -26,7 +38,14 @@ const ProductRow: React.FC<Props> = ({ eyebrow, title, products, link }) => {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
         {products.slice(0, 4).map((p) => (
-          <ProductCard key={p.id} product={p} />
+          // 3. هنا المكان الدقيق للتمرير داخل الـ map لكي تأخذ كل بطاقة الأكشن الخاص بها
+          <ProductCard 
+            key={p.id || p._id} 
+            product={p} 
+            onDelete={onDelete}
+            onUpdate={onUpdate}
+            onDuplicate={onDuplicate}
+          />
         ))}
       </div>
     </section>
