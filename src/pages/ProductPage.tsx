@@ -124,8 +124,8 @@ const ProductPage: React.FC = () => {
 
   return (
     <Shell>
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-12 grid md:grid-cols-2 gap-12 lg:gap-20">
-        <div className="sticky top-24 self-start">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:py-12 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20">
+        <div className="self-start lg:sticky lg:top-24">
           <div className="bg-[#F2ECE6] rounded-sm overflow-hidden aspect-[4/5]">
             {currentImage ? (
               <img src={currentImage} alt={product.name} className="w-full h-full object-cover" />
@@ -135,7 +135,7 @@ const ProductPage: React.FC = () => {
           </div>
 
           {allImages.length > 1 && (
-            <div className="mt-4 grid grid-cols-4 sm:grid-cols-5 gap-3">
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-2 lg:grid lg:grid-cols-5">
               {allImages.map((img: string, index: number) => {
                 const active = img === currentImage;
                 return (
@@ -143,7 +143,7 @@ const ProductPage: React.FC = () => {
                     key={`${img}-${index}`}
                     type="button"
                     onClick={() => setSelectedImage(img)}
-                    className={`aspect-square overflow-hidden rounded-md border transition-all ${active ? 'border-[#1D1D1D] ring-2 ring-[#FF6A00]/30' : 'border-[#ddd] hover:border-[#FF6A00]'}`}
+                    className={`aspect-square overflow-hidden min-w-[80px] Ig:min-w-0 rounded-md border transition-all ${active ? 'border-[#1D1D1D] ring-2 ring-[#FF6A00]/30' : 'border-[#ddd] hover:border-[#FF6A00]'}`}
                     aria-label={`Show product image ${index + 1}`}
                   >
                     <img src={img} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
@@ -156,18 +156,18 @@ const ProductPage: React.FC = () => {
 
         <div>
           <p className="text-xs tracking-[0.2em] uppercase text-[#a59f97] mb-2">{product.product_type}</p>
-          <h1 className="font-serif text-4xl lg:text-5xl text-[#1D1D1D] leading-tight">{product.name}</h1>
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1D1D1D] leading-tight">{product.name}</h1>
           <div className="flex items-center gap-2 mt-3 text-[#FF6A00]">
             {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
             <span className="text-xs text-[#8D8D8D] ml-1">Loved by collectors</span>
           </div>
-          <p className="text-2xl text-[#1D1D1D] mt-5">{formatMAD(price)}</p>
-          <p className="text-[#6b6b6b] leading-relaxed mt-6">{product.description}</p>
+          <p className="text-xl sm:text-2xl text-[#1D1D1D] mt-4">{formatMAD(price)}</p>
+          <p className="text-[15px] sm:text-base text-[#6b6b6b] leading-7 mt-5">{product.description}</p>
 
           {sizes.length > 0 && (
             <div className="mt-8">
               <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">Size</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
                 {sizes.map((s) => (
                   <button
                     key={s}
@@ -184,7 +184,7 @@ const ProductPage: React.FC = () => {
           {materials.length > 0 && (
             <div className="mt-6">
               <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">Finish</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
                 {materials.map((m) => (
                   <button
                     key={m}
@@ -201,7 +201,7 @@ const ProductPage: React.FC = () => {
           {allAddons.length > 0 && (
             <div className="mt-6">
               <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">Add-ons & Extras</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {allAddons.map((a) => {
                   const on = addons[a.label];
                   return (
@@ -221,17 +221,17 @@ const ProductPage: React.FC = () => {
 
           <div className="mt-6">
             <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">Quantity</p>
-            <div className="inline-flex items-center border border-[#ddd]">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2">−</button>
-              <span className="px-5">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} className="px-4 py-2">+</button>
+            <div className="inline-flex items-center border border-[#ddd] rounded-lg overflow-hidden">
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-5 py-3 text-lg">−</button>
+              <span className="px-6 py-3">{qty}</span>
+              <button onClick={() => setQty((q) => q + 1)} className="px-5 py-3 text-lg">+</button>
             </div>
           </div>
 
           <button
             onClick={add}
             disabled={missingSelection || !inStock}
-            className="w-full mt-8 bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase rounded-lg hover:bg-[#FF6A00] transition-colors disabled:opacity-40"
+            className="w-full mt-8 bg-[#1D1D1D] text-white py-4 sm:py-5 text-sm tracking-[0.2em] uppercase rounded-xl hover:bg-[#FF6A00] active:scale-[0.99] transition-all disabled:opacity-40"
           >
             {!inStock ? 'Sold Out' : missingSelection ? 'Select Options' : 'Add to Selection'}
           </button>
@@ -246,7 +246,7 @@ const ProductPage: React.FC = () => {
       {related.length > 0 && (
         <div className="max-w-[1400px] mx-auto px-6 lg:px-10 pb-24">
           <h2 className="font-serif text-3xl mb-10">You May Also Love</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 ">
             {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </div>
