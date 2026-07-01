@@ -32,8 +32,8 @@ const ProductsPanel: React.FC = () => {
   const [products, setProducts] = useState<Prod[]>([]);
   const [cats, setCats] = useState<Cat[]>([]);
   const [media, setMedia] = useState<Media[]>([]);
-  const [draftProduct, setDraftProduct] = useState < Prod | null > (null);
-const [dirty, setDirty] = useState(false);
+  const [draftProduct, setDraftProduct] = useState<Prod | null>(null);
+  const [dirty, setDirty] = useState(false);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'draft' | 'archived'>('all');
   const [confirming, setConfirming] = useState<Prod | null>(null);
@@ -50,94 +50,64 @@ const [dirty, setDirty] = useState(false);
   const loadMedia = async () => { const r = await cms('cms_media_list'); setMedia(r.media || []); };
   useEffect(() => { load(); loadCats(); loadMedia(); }, []);
 
+  // Helper to update draftProduct and set dirty
+  const updateDraft = (updater: (prev: Prod) => Prod) => {
+    setDraftProduct((prev) => {
+      if (!prev) return prev;
+      setDirty(true);
+      return updater(prev);
+    });
+  };
+
+  // Helper to update metadata only
+  const setMd = (patch: any) => {
+    updateDraft((prev) => ({
+      ...prev,
+      metadata: { ...prev.metadata, ...patch },
+    }));
+  };
+
   const open = (p?: Prod) => {
     const base = p ? { ...p, tags: Array.isArray(p.tags) ? p.tags.join(', ') : (p.tags || ''), variants: p.variants || [] } : { ...empty };
     const md = base.metadata || {};
-    // normalize metadata fields
     base.metadata = {
       categories: Array.isArray(md.categories) ? md.categories : [],
       sizes: Array.isArray(md.sizes) ? md.sizes : [],
       addons: Array.isArray(md.addons) && md.addons.length ? md.addons : DEFAULT_ADDONS.map((a) => ({ ...a })),
     };
-    setEditing(base);
+    setDraftProduct(base);
+    setDirty(false);
   };
 
-  const setMetadata = (patch:any)=>{
-
-setDraftProduct(prev=>{
-
-if(!prev) return prev;
-
-setDirty(true);
-
-return{
-
-...prev,
-
-metadata:{
-
-...prev.metadata,
-
-...patch
-
-}
-
-}
-
-})
-
-}
+  const closeEditor = () => {
+    if (dirty) {
+      if (!window.confirm('You have unsaved changes. Discard them?')) return;
+    }
+    setDraftProduct(null);
+    setDirty(false);
+  };
 
   const save = async () => {
-    if(!draftProduct) return;
-
-const payload=structuredClone(draftProduct);
-
-payload.tags=(payload.tags||"")
-
-.toString()
-
-.split(",")
-
-.map((x:string)=>x.trim())
-
-.filter(Boolean);
-
-await cms(
-
-'cms_product_save',
-
-{
-
-product:payload
-
-}
-
-);
-
-setDirty(false);
-
-setDraftProduct(null);
-
-load();
-   const closeEditor=()=>{
-
-if(dirty){
-
-if(!window.confirm(
-
-"You have unsaved changes. Discard them?"
-
-))
-
-return;
-
-}
-
-setDraftProduct(null);
-
-}
+    if (!draftProduct?.name) return;
+    setBusy(true);
+    try {
+      const payload = { ...draftProduct };
+      payload.tags = (payload.tags || '')
+        .toString()
+        .split(',')
+        .map((x: string) => x.trim())
+        .filter(Boolean);
+      await cms('cms_product_save', { product: payload });
+      setDirty(false);
+      setDraftProduct(null);
+      load();
+    } catch (e: any) {
+      alert(e?.message || 'Error saving product');
+    } finally {
+      setBusy(false);
+    }
   };
+
   const confirmDelete = async () => {
     if (!confirming?.id) return;
     setDelBusy(true);
@@ -150,144 +120,92 @@ setDraftProduct(null);
 
   // ---- multi image upload ----
   const addImages = async (files?: FileList | null) => {
-    if (!files || !editing) return;
+    if (!files || !draftProduct) return;
     setUploading(true);
     try {
       const urls: string[] = [];
       for (const f of Array.from(files)) urls.push(await uploadMedia(f, 'product'));
-      setDraftProduct(prev=>{
-
-if(!prev) return prev;
-
-return{
-
-...prev,
-
-images:[
-
-...(prev.images||[]),
-
-...urls
-
-]
-
-}
-
-})
+      updateDraft((prev) => ({
+        ...prev,
+        images: [...(prev.images || []), ...urls],
+      }));
       loadMedia();
     } finally { setUploading(false); }
   };
-  const removeImage=(index:number)=>{
-
-setDraftProduct(prev=>{
-
-if(!prev) return prev;
-
-const images=[...(prev.images||[])];
-
-images.splice(index,1);
-
-return{
-
-...prev,
-
-images
-
-}
-
-})
-
-setDirty(true);
-
-}
-  const toggleFromMedia = (url:string)=>{
-
-setDraftProduct(prev=>{
-
-if(!prev) return prev;
-
-const images=[...(prev.images||[])];
-
-const exists=images.includes(url);
-
-return{
-
-...prev,
-
-images:exists
-
-?images.filter(x=>x!==url)
-
-:[...images,url]
-
-}
-
-})
-
-setDirty(true);
-
-}
+  const removeImage = (index: number) => {
+    updateDraft((prev) => ({
+      ...prev,
+      images: prev.images?.filter((_, i) => i !== index) || [],
+    }));
+  };
+  const toggleFromMedia = (url: string) => {
+    updateDraft((prev) => {
+      const imgs = prev.images || [];
+      return {
+        ...prev,
+        images: imgs.includes(url) ? imgs.filter((u) => u !== url) : [...imgs, url],
+      };
+    });
+  };
 
   // ---- categories multiselect ----
   const toggleCat = (id: string) => {
-    const cur = editing?.metadata?.categories || [];
+    const cur = draftProduct?.metadata?.categories || [];
     setMd({ categories: cur.includes(id) ? cur.filter((c: string) => c !== id) : [...cur, id] });
   };
 
   // ---- sizes multiselect ----
   const toggleSize = (s: string) => {
-    const cur = editing?.metadata?.sizes || [];
+    const cur = draftProduct?.metadata?.sizes || [];
     setMd({ sizes: cur.includes(s) ? cur.filter((x: string) => x !== s) : [...cur, s] });
   };
   const addCustomSize = () => {
     const s = customSize.trim();
     if (!s) return;
-    const cur = editing?.metadata?.sizes || [];
+    const cur = draftProduct?.metadata?.sizes || [];
     if (!cur.includes(s)) setMd({ sizes: [...cur, s] });
     setCustomSize('');
   };
-   const updateProduct = (patch: Partial < Prod > ) => {
-  setDraftProduct(prev => {
-    if (!prev) return prev;
-    
-    setDirty(true);
-    
-    return {
-      ...prev,
-      ...patch
-    };
-  });
-};
+
   // ---- add-ons ----
   const toggleAddon = (i: number) => {
-    const list = [...(editing?.metadata?.addons || [])];
+    const list = [...(draftProduct?.metadata?.addons || [])];
     list[i] = { ...list[i], enabled: !list[i].enabled };
     setMd({ addons: list });
   };
   const setAddonPrice = (i: number, price: number) => {
-    const list = [...(editing?.metadata?.addons || [])];
+    const list = [...(draftProduct?.metadata?.addons || [])];
     list[i] = { ...list[i], price };
     setMd({ addons: list });
   };
   const removeAddon = (i: number) => {
-    const list = (editing?.metadata?.addons || []).filter((_: any, x: number) => x !== i);
+    const list = (draftProduct?.metadata?.addons || []).filter((_: any, x: number) => x !== i);
     setMd({ addons: list });
   };
   const addAddon = () => {
     if (!newAddon.label.trim()) return;
-    const list = [...(editing?.metadata?.addons || []), { label: newAddon.label.trim(), price: Math.round(newAddon.price * 100), enabled: true }];
+    const list = [
+      ...(draftProduct?.metadata?.addons || []),
+      { label: newAddon.label.trim(), price: Math.round(newAddon.price * 100), enabled: true },
+    ];
     setMd({ addons: list });
     setNewAddon({ label: '', price: 0 });
   };
 
   // ---- variants ----
   const toggleVariant = (material: string, size: string) => {
-    if (!editing) return;
+    if (!draftProduct) return;
     const title = `${material} · ${size}`;
-    const exists = editing.variants!.find((v) => v.title === title);
-    const variants = exists ? editing.variants!.filter((v) => v.title !== title)
-      : [...editing.variants!, { title, option1: size, option2: material, price: editing.price, inventory_qty: 10 }];
-    setEditing({ ...editing, variants, has_variants: variants.length > 0 });
+    const variants = draftProduct.variants || [];
+    const exists = variants.find((v) => v.title === title);
+    const newVariants = exists
+      ? variants.filter((v) => v.title !== title)
+      : [...variants, { title, option1: size, option2: material, price: draftProduct.price, inventory_qty: 10 }];
+    updateDraft((prev) => ({
+      ...prev,
+      variants: newVariants,
+      has_variants: newVariants.length > 0,
+    }));
   };
 
   const filtered = products.filter((p) =>
@@ -325,7 +243,6 @@ setDirty(true);
         ))}
       </div>
 
-
       {/* list */}
       <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
         {filtered.length === 0 && <p className="text-[#8D8D8D] col-span-full py-10 text-center">No products yet.</p>}
@@ -359,25 +276,25 @@ setDirty(true);
       </div>
 
       {/* editor */}
-      {editing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setEditing(null)}>
+      {draftProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={closeEditor}>
           <div className="bg-white w-full max-w-3xl max-h-[94vh] overflow-auto rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-[#eee] px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="font-serif text-xl">{editing.id ? 'Edit' : 'New'} Product</h3>
-              <button onClick={() => setEditing(null)} className="text-[#999] hover:text-black"><X size={20} /></button>
+              <h3 className="font-serif text-xl">{draftProduct.id ? 'Edit' : 'New'} Product</h3>
+              <button onClick={closeEditor} className="text-[#999] hover:text-black"><X size={20} /></button>
             </div>
 
             <div className="p-6 space-y-7">
               {/* basics */}
               <div className="grid grid-cols-2 gap-3">
-                <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} placeholder="Product title" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 col-span-2 focus:border-[#FF6A00] outline-none" />
-                <input value={editing.product_type || ''} onChange={(e) => setEditing({ ...editing, product_type: e.target.value })} placeholder="Type (e.g. Poster)" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 focus:border-[#FF6A00] outline-none" />
-                <input value={editing.tags as string || ''} onChange={(e) => setEditing({ ...editing, tags: e.target.value })} placeholder="tags, comma separated" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 focus:border-[#FF6A00] outline-none" />
-                <input type="number" value={editing.price ? editing.price / 100 : ''} onChange={(e) => setEditing({ ...editing, price: Math.round(Number(e.target.value) * 100) })} placeholder="Base price (MAD)" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 focus:border-[#FF6A00] outline-none" />
-                <select value={editing.status} onChange={(e) => setEditing({ ...editing, status: e.target.value })} className="border border-[#e6e6e6] rounded-lg px-3 py-2.5">
+                <input value={draftProduct.name} onChange={(e) => updateDraft((prev) => ({ ...prev, name: e.target.value }))} placeholder="Product title" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 col-span-2 focus:border-[#FF6A00] outline-none" />
+                <input value={draftProduct.product_type || ''} onChange={(e) => updateDraft((prev) => ({ ...prev, product_type: e.target.value }))} placeholder="Type (e.g. Poster)" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 focus:border-[#FF6A00] outline-none" />
+                <input value={draftProduct.tags as string || ''} onChange={(e) => updateDraft((prev) => ({ ...prev, tags: e.target.value }))} placeholder="tags, comma separated" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 focus:border-[#FF6A00] outline-none" />
+                <input type="number" value={draftProduct.price ? draftProduct.price / 100 : ''} onChange={(e) => updateDraft((prev) => ({ ...prev, price: Math.round(Number(e.target.value) * 100) }))} placeholder="Base price (MAD)" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 focus:border-[#FF6A00] outline-none" />
+                <select value={draftProduct.status} onChange={(e) => updateDraft((prev) => ({ ...prev, status: e.target.value }))} className="border border-[#e6e6e6] rounded-lg px-3 py-2.5">
                   {['active', 'draft', 'archived'].map((s) => <option key={s}>{s}</option>)}
                 </select>
-                <textarea value={editing.description || ''} onChange={(e) => setEditing({ ...editing, description: e.target.value })} placeholder="Description" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 col-span-2 h-20 focus:border-[#FF6A00] outline-none" />
+                <textarea value={draftProduct.description || ''} onChange={(e) => updateDraft((prev) => ({ ...prev, description: e.target.value }))} placeholder="Description" className="border border-[#e6e6e6] rounded-lg px-3 py-2.5 col-span-2 h-20 focus:border-[#FF6A00] outline-none" />
               </div>
 
               {/* CATEGORIES multi-select */}
@@ -387,7 +304,7 @@ setDirty(true);
                   <div className="space-y-3">
                     {tops.map((t) => {
                       const kids = childrenOf(t.id);
-                      const sel = editing.metadata.categories;
+                      const sel = draftProduct.metadata.categories;
                       return (
                         <div key={t.id} className="border border-[#f0f0f0] rounded-lg p-3">
                           <button type="button" onClick={() => toggleCat(t.id)}
@@ -424,14 +341,14 @@ setDirty(true);
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {editing.images?.map((img, i) => (
+                  {draftProduct.images?.map((img, i) => (
                     <div key={i} className="relative group">
                       <img src={img} className="w-20 h-20 object-cover rounded-lg border border-[#eee]" />
                       {i === 0 && <span className="absolute bottom-1 left-1 bg-[#FF6A00] text-white text-[9px] px-1.5 rounded">Cover</span>}
                       <button onClick={() => removeImage(i)} className="absolute -top-2 -right-2 bg-white border rounded-full p-0.5 shadow opacity-0 group-hover:opacity-100"><X size={12} /></button>
                     </div>
                   ))}
-                  {(!editing.images || editing.images.length === 0) && <p className="text-xs text-[#bbb] py-6">No images selected yet.</p>}
+                  {(!draftProduct.images || draftProduct.images.length === 0) && <p className="text-xs text-[#bbb] py-6">No images selected yet.</p>}
                 </div>
               </section>
 
@@ -439,8 +356,8 @@ setDirty(true);
               <section>
                 <div className="flex items-center gap-2 mb-3"><Ruler size={15} className="text-[#FF6A00]" /><h4 className="font-medium text-sm">Available Sizes</h4></div>
                 <div className="flex flex-wrap gap-2 mb-2">
-                  {[...new Set([...PRESET_SIZES, ...(editing.metadata.sizes || [])])].map((s) => {
-                    const active = (editing.metadata.sizes || []).includes(s);
+                  {[...new Set([...PRESET_SIZES, ...(draftProduct.metadata.sizes || [])])].map((s) => {
+                    const active = (draftProduct.metadata.sizes || []).includes(s);
                     return (
                       <button key={s} type="button" onClick={() => toggleSize(s)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${active ? 'bg-[#FF6A00] text-white border-[#FF6A00]' : 'border-[#e6e6e6] text-[#666] hover:border-[#FF6A00]'}`}>{s}</button>
@@ -457,7 +374,7 @@ setDirty(true);
               <section>
                 <div className="flex items-center gap-2 mb-3"><Sparkles size={15} className="text-[#FF6A00]" /><h4 className="font-medium text-sm">Add-ons & Extras <span className="text-[#aaa] font-normal">(toggle + set extra price)</span></h4></div>
                 <div className="space-y-2">
-                  {(editing.metadata.addons || []).map((a: AddOn, i: number) => (
+                  {(draftProduct.metadata.addons || []).map((a: AddOn, i: number) => (
                     <div key={i} className={`flex items-center gap-3 border rounded-lg px-3 py-2 ${a.enabled ? 'border-[#FF6A00] bg-[#FFF6F0]' : 'border-[#eee]'}`}>
                       <button type="button" onClick={() => toggleAddon(i)} className={`w-9 h-5 rounded-full relative transition-colors ${a.enabled ? 'bg-[#FF6A00]' : 'bg-[#ddd]'}`}>
                         <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${a.enabled ? 'left-4' : 'left-0.5'}`} />
@@ -488,18 +405,24 @@ setDirty(true);
                       <span className="w-20 text-xs text-[#555]">{m}</span>
                       {PRESET_SIZES.map((s) => {
                         const title = `${m} · ${s}`;
-                        const active = editing.variants!.find((v) => v.title === title);
+                        const active = (draftProduct.variants || []).find((v) => v.title === title);
                         return <button key={s} type="button" onClick={() => toggleVariant(m, s)} className={`px-2 py-1 text-[11px] rounded border ${active ? 'bg-[#1D1D1D] text-white border-[#1D1D1D]' : 'border-[#e6e6e6] text-[#888] hover:border-[#FF6A00]'}`}>{s}</button>;
                       })}
                     </div>
                   ))}
                 </div>
-                {editing.variants!.length > 0 && (
+                {(draftProduct.variants || []).length > 0 && (
                   <div className="mt-3 space-y-1">
-                    {editing.variants!.map((v) => (
+                    {draftProduct.variants!.map((v) => (
                       <div key={v.title} className="flex items-center justify-between text-sm bg-[#fafafa] rounded px-2 py-1">
                         <span>{v.title}</span>
-                        <input type="number" value={v.price / 100} onChange={(e) => setEditing({ ...editing, variants: editing.variants!.map((x) => x.title === v.title ? { ...x, price: Math.round(Number(e.target.value) * 100) } : x) })} className="border border-[#e6e6e6] rounded px-2 py-1 w-28 text-right" />
+                        <input type="number" value={v.price / 100} onChange={(e) => {
+                          const newPrice = Math.round(Number(e.target.value) * 100);
+                          updateDraft((prev) => ({
+                            ...prev,
+                            variants: prev.variants!.map((x) => x.title === v.title ? { ...x, price: newPrice } : x),
+                          }));
+                        }} className="border border-[#e6e6e6] rounded px-2 py-1 w-28 text-right" />
                       </div>
                     ))}
                   </div>
@@ -508,15 +431,16 @@ setDirty(true);
             </div>
 
             <div className="sticky bottom-0 bg-white border-t border-[#eee] px-6 py-4 flex justify-end gap-3">
-              <button onClick={() => setEditing(null)} className="px-4 py-2 text-sm text-[#8D8D8D]">Cancel</button>
-              <button disabled={busy} onClick={save} className="bg-[#FF6A00] text-white px-6 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-[#e85f00]">{busy ? 'Saving…' : 'Save Product'}</button>
+              {dirty && <span className="text-sm text-amber-600 mr-auto">Unsaved Changes</span>}
+              <button onClick={closeEditor} className="px-4 py-2 text-sm text-[#8D8D8D]">Cancel</button>
+              <button disabled={busy || !dirty} onClick={save} className="bg-[#FF6A00] text-white px-6 py-2.5 rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-[#e85f00]">{busy ? 'Saving…' : 'Save Product'}</button>
             </div>
           </div>
         </div>
       )}
 
       {/* MEDIA PICKER */}
-      {picker && editing && (
+      {picker && draftProduct && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[60]" onClick={() => setPicker(false)}>
           <div className="bg-white w-full max-w-3xl max-h-[85vh] overflow-auto rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
@@ -526,7 +450,7 @@ setDirty(true);
             {media.length === 0 ? <p className="text-sm text-[#aaa] py-10 text-center">No media uploaded yet.</p> : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                 {media.map((m) => {
-                  const sel = (editing.images || []).includes(m.url);
+                  const sel = (draftProduct.images || []).includes(m.url);
                   return (
                     <button key={m.id} onClick={() => toggleFromMedia(m.url)} className={`relative aspect-square rounded-lg overflow-hidden border-2 ${sel ? 'border-[#FF6A00]' : 'border-transparent'}`}>
                       <img src={m.url} className="w-full h-full object-cover" />
@@ -537,7 +461,7 @@ setDirty(true);
               </div>
             )}
             <div className="flex justify-end mt-5">
-              <button onClick={() => setPicker(false)} className="bg-[#FF6A00] text-white px-6 py-2.5 rounded-lg text-sm font-medium">Done ({(editing.images || []).length} selected)</button>
+              <button onClick={() => setPicker(false)} className="bg-[#FF6A00] text-white px-6 py-2.5 rounded-lg text-sm font-medium">Done ({(draftProduct.images || []).length} selected)</button>
             </div>
           </div>
         </div>
@@ -561,40 +485,5 @@ setDirty(true);
     </div>
   );
 };
-<div className="fixed bottom-0 left-0 right-0 border-t bg-white p-4 flex justify-end gap-3">
-
-{dirty&&
-
-<span>
-
-Unsaved Changes
-
-</span>
-
-}
-
-<button
-
-onClick={closeEditor}
-
->
-
-Cancel
-
-</button>
-
-<button
-
-disabled={!dirty}
-
-onClick={save}
-
->
-
-Save
-
-</button>
-
-</div>
 
 export default ProductsPanel;
