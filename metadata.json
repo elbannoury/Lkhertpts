@@ -1,6 +1,0 @@
-{
-  "name": "PostgreSQL Profile & Session Logger",
-  "description": "A full-stack application storing user profiles and session logs in a PostgreSQL database with secure Firebase Auth.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
