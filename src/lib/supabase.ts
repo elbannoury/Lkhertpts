@@ -1,10 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from './types/supabase';
 
+const supabaseUrl = 'https://fzdxsaxxpabrjzsutwrq.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6ZHhzYXh4cGFicmp6c3V0d3JxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMTk1ODYsImV4cCI6MjA5ODg5NTU4Nn0.MIgxkrgXE0hb5wALtvX3WJZ07ngRB8fAbFzz-a5uOJs';
 
-// Initialize database client
-const supabaseUrl = 'https://iedarnneftukutsswpxt.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImllZGFybm5lZnR1a3V0c3N3cHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyODAyODMsImV4cCI6MjA5ODg1NjI4M30.I2Wa0hJUEBlcWqmAR5-pZQoFIs5MeJoCFErmuizx7y4';
-const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-
-export { supabase };
+// Helper function to call the owner-auth edge function
+export const callOwnerAuth = async (action: string, payload: any) => {
+  const { data, error } = await supabase.functions.invoke('owner-auth', {
+    body: { action, ...payload },
+  });
+  if (error) throw error;
+  return data;
+};
