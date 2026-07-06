@@ -136,6 +136,16 @@ const Categories: React.FC = () => {
             </Link>
           ))}
         </div>
+        {/* CTA Section */}
+<div className="mt-16 text-center">
+  <Link
+    to="/collections"
+    className="inline-flex items-center gap-2 px-8 py-4 bg-[#FF6A00] hover:bg-[#E55A00] text-white rounded-full font-medium transition-all duration-300 hover:shadow-lg hover:scale-105 group"
+  >
+    <span>{lang === 'ar' ? 'عرض جميع المجموعات' : 'View All Collections'}</span>
+    <span className="transform group-hover:translate-x-1 transition-transform duration-300">→</span>
+  </Link>
+</div>
       </section>
     </>
   );
