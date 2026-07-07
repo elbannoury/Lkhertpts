@@ -152,8 +152,8 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
 
 
   const loadOwnerExtras = async () => {
-    const { data: r } = await supabase.from('pts_notification_recipients').select('*').order('created_at');
-    setRecipients(r || []);
+    const r = await cms('cms_notification_recipients_list');
+    setRecipients(r?.recipients || []);
     const a = await cms('list_admins'); setAdmins(a?.admins || []);
   };
   useEffect(() => { if (authed && role === 'owner') loadOwnerExtras(); }, [authed, role]);
@@ -161,15 +161,18 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
   const togglePurpose = (p: string) =>
     setNPurpose((prev) => (prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]));
 
+  const [recErr, setRecErr] = useState('');
   const addRecipient = async () => {
     if (!nValue || recipients.filter((r) => r.type === nType).length >= 5) return;
-    await supabase.from('pts_notification_recipients').insert({ type: nType, value: nValue, label: nLabel || null, api_key: nType === 'whatsapp' ? nKey || null : null, purpose: nPurpose.length ? nPurpose : ['orders'], enabled: true });
+    setRecErr('');
+    const r = await cms('cms_notification_recipient_save', { type: nType, value: nValue, label: nLabel || null, api_key: nType === 'whatsapp' ? nKey || null : null, purpose: nPurpose.length ? nPurpose : ['orders'] });
+    if (r?.ok === false) { setRecErr(r?.error || 'Could not add recipient.'); return; }
     setNValue(''); setNLabel(''); setNKey(''); setNPurpose(['orders']); loadOwnerExtras();
   };
-  const setPurposeFor = async (r: any, purpose: string[]) => { await supabase.from('pts_notification_recipients').update({ purpose: purpose.length ? purpose : ['orders'] }).eq('id', r.id); loadOwnerExtras(); };
+  const setPurposeFor = async (r: any, purpose: string[]) => { await cms('cms_notification_recipient_update', { id: r.id, purpose: purpose.length ? purpose : ['orders'] }); loadOwnerExtras(); };
 
-  const toggle = async (r: any) => { await supabase.from('pts_notification_recipients').update({ enabled: !r.enabled }).eq('id', r.id); loadOwnerExtras(); };
-  const delRec = async (id: string) => { await supabase.from('pts_notification_recipients').delete().eq('id', id); loadOwnerExtras(); };
+  const toggle = async (r: any) => { await cms('cms_notification_recipient_update', { id: r.id, enabled: !r.enabled }); loadOwnerExtras(); };
+  const delRec = async (id: string) => { await cms('cms_notification_recipient_delete', { id }); loadOwnerExtras(); };
 
   const createAdmin = async () => {
     if (!newAdmin.username.trim() || !newAdmin.password.trim()) {
@@ -379,6 +382,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
                   <button key={p} type="button" onClick={() => togglePurpose(p)} className={`px-4 py-1.5 rounded-full text-xs uppercase tracking-wide border ${nPurpose.includes(p) ? 'bg-[#6E44FF] text-white border-[#6E44FF]' : 'border-[#ddd] text-[#777]'}`}>{p}</button>
                 ))}
               </div>
+              {recErr && <p className="mt-3 text-sm text-red-500">{recErr}</p>}
             </div>
             <div className="space-y-2">
               {recipients.map((r) => (
