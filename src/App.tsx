@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { CartProvider } from "@/contexts/CartContext";
-import CollectionsPage from '@/pages/CollectionsPage';
 import Shell from "@/components/Shell";
 import Inspiration from "@/components/sections/Inspiration";
 import Index from "./pages/Index";
@@ -49,8 +48,6 @@ const App = () => (
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/inspiration" element={<InspirationPage />} />
-                <Route path="/collections" element={<CollectionsPage />} />
-                <Route path="/collections/:handle" element={<CollectionPage />} />
                 <Route path="/collections/:handle" element={<CollectionPage />} />
                 <Route path="/rooms/:name" element={<RoomPage />} />
                 <Route path="/products/:handle" element={<ProductPage />} />
