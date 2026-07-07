@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { HERO_IMAGE } from '@/data/catalog';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-
+ 
 const Hero: React.FC = () => {
   const { t } = useI18n();
   const { settings } = useSiteSettings();
