@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { formatMAD } from '@/data/catalog';
 import { isOwner, cms } from './cms';
 import { Search, Download, Trash2 } from 'lucide-react';
@@ -32,8 +31,8 @@ const OrdersPanel: React.FC = () => {
   const owner = isOwner();
 
   const load = async () => {
-    const { data } = await supabase.from('ecom_orders').select('*, items:ecom_order_items(*)').order('created_at', { ascending: false }).limit(200);
-    setOrders(data || []);
+    const r = await cms('cms_orders_list', { limit: 200 });
+    setOrders(r?.orders || []);
   };
   useEffect(() => { load(); }, []);
 
@@ -47,7 +46,7 @@ const OrdersPanel: React.FC = () => {
   };
 
   const saveTracking = async (o: any) => { await cms('cms_order_status', { id: o.id, status: o.status, tracking_code: track[o.id] ?? o.tracking_code }); load(); };
-  const del = async (id: string) => { if (confirm('Delete this order?')) { await supabase.from('ecom_order_items').delete().eq('order_id', id); await supabase.from('ecom_orders').delete().eq('id', id); load(); } };
+  const del = async (id: string) => { if (confirm('Delete this order?')) { await cms('cms_order_delete', { id }); load(); } };
 
   const filtered = useMemo(() => orders.filter((o) => {
     const a = o.shipping_address || {};
