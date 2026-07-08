@@ -112,7 +112,7 @@ const CheckoutPage: React.FC = () => {
     <Shell>
       <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-16">
         <h1 className="font-serif text-4xl md:text-5xl mb-3">Place Your Order</h1>
-        <p className="text-[#8D8D8D] mb-12">No payment online — pay calmly on delivery. We confirm by phone.</p>
+        <p className="text-[#8D8D8D] mb-12">We'll contact you by phone to confirm payment and delivery details.</p>
 
         <div className="grid md:grid-cols-[1fr_380px] gap-12">
           <form onSubmit={submit} className="space-y-5">
@@ -152,7 +152,7 @@ const CheckoutPage: React.FC = () => {
             <div className="border-t border-[#ddd] pt-4 flex justify-between text-sm">
               <span>Total</span><span className="font-serif text-lg">{formatMAD(subtotal)}</span>
             </div>
-            <p className="text-xs text-[#8D8D8D] mt-3">Free delivery · Pay on delivery</p>
+            <p className="text-xs text-[#8D8D8D] mt-3">Free delivery</p>
           </div>
         </div>
       </div>
