@@ -17,10 +17,11 @@ const ProductPage: React.FC = () => {
   const [qty, setQty] = useState(1);
   const [addons, setAddons] = useState<Record<string, boolean>>({});
   const [related, setRelated] = useState<any[]>([]);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
     const run = async () => {
-      setSelectedVariant(null); setSize(''); setMaterial('');
+      setSelectedVariant(null); setSize(''); setMaterial(''); setActiveImage(0);
       const { data } = await supabase
         .from('ecom_products').select('*, variants:ecom_product_variants(*)').eq('handle', handle).single();
       if (!data) return;
@@ -92,8 +93,27 @@ const ProductPage: React.FC = () => {
   return (
     <Shell>
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-12 grid md:grid-cols-2 gap-12 lg:gap-20">
-        <div className="bg-[#F2ECE6] rounded-sm overflow-hidden aspect-[4/5] sticky top-24 self-start">
-          <img src={product.images?.[0]} alt={product.name} className="w-full h-full object-cover" />
+        <div className="sticky top-24 self-start">
+          <div className="bg-[#F2ECE6] rounded-sm overflow-hidden aspect-[4/5] flex items-center justify-center">
+            <img
+              src={product.images?.[activeImage] || product.images?.[0]}
+              alt={product.name}
+              className="w-full h-full object-contain"
+            />
+          </div>
+          {(product.images || []).length > 1 && (
+            <div className="mt-4 grid grid-cols-5 gap-3">
+              {product.images.map((img: string, i: number) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImage(i)}
+                  className={`bg-[#F2ECE6] rounded-sm overflow-hidden aspect-square flex items-center justify-center border transition-colors ${activeImage === i ? 'border-[#1D1D1D]' : 'border-transparent hover:border-[#ccc]'}`}
+                >
+                  <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
@@ -169,7 +189,7 @@ const ProductPage: React.FC = () => {
 
           <div className="mt-8 space-y-3 text-sm text-[#6b6b6b]">
             <div className="flex items-center gap-3"><Truck size={17} className="text-[#FF6A00]" /> Free delivery in Morocco · 3–5 days</div>
-            <div className="flex items-center gap-3"><ShieldCheck size={17} className="text-[#FF6A00]" /> Pay on delivery · Certificate included</div>
+            <div className="flex items-center gap-3"><ShieldCheck size={17} className="text-[#FF6A00]" /> Secure checkout · Certificate included</div>
           </div>
         </div>
       </div>
