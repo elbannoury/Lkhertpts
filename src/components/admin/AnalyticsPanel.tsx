@@ -22,11 +22,50 @@ const AnalyticsPanel: React.FC = () => {
 
   const series: { label: string; orders: number; revenue: number }[] = a.chart?.[range] || [];
   const maxVal = Math.max(1, ...series.map((d) => d.orders));
+  
+  /**
+   * Enhanced label formatting for better readability
+   * - Day: Shows MM-DD format (e.g., "12-25")
+   * - Week: Shows week number with year (e.g., "W52 2024")
+   * - Month: Shows month name and year (e.g., "Dec 2024")
+   * - Year: Shows full year (e.g., "2024")
+   */
   const fmtLabel = (l: string) => {
-    if (range === 'day') return l.slice(5);          // MM-DD
-    if (range === 'month') return l.slice(2);        // YY-MM
-    if (range === 'week') return l.split('-W')[1] ? 'W' + l.split('-W')[1] : l;
-    return l;                                         // year
+    if (range === 'day') {
+      // Format: MM-DD → "Dec 25"
+      const parts = l.split('-');
+      if (parts.length >= 2) {
+        const month = parseInt(parts[0]);
+        const day = parseInt(parts[1]);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[month - 1]} ${day}`;
+      }
+      return l.slice(5);
+    }
+    
+    if (range === 'week') {
+      // Format: YYYY-Www → "W52 2024"
+      const match = l.match(/(\d{4})-W(\d{2})/);
+      if (match) {
+        return `W${parseInt(match[2])} ${match[1]}`;
+      }
+      return l;
+    }
+    
+    if (range === 'month') {
+      // Format: YYYY-MM → "Dec 2024"
+      const parts = l.split('-');
+      if (parts.length >= 2) {
+        const month = parseInt(parts[1]);
+        const year = parts[0];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return `${months[month - 1]} ${year}`;
+      }
+      return l;
+    }
+    
+    // Year format: just show the year
+    return l;
   };
 
   return (
@@ -53,19 +92,28 @@ const AnalyticsPanel: React.FC = () => {
             ))}
           </div>
         </div>
-        <div className="flex items-end gap-1.5 h-48">
+        
+        <div className="flex items-end gap-1.5 h-48 overflow-x-auto pb-2">
           {series.length === 0 && <p className="text-sm text-[#bbb]">No data yet.</p>}
           {series.map((d) => (
-            <div key={d.label} className="group flex-1 flex flex-col items-center justify-end h-full min-w-0">
+            <div key={d.label} className="group flex-1 flex flex-col items-center justify-end h-full min-w-0 flex-shrink-0" style={{ minWidth: '40px' }}>
               <div className="relative w-full flex justify-center">
                 <span className="absolute -top-6 opacity-0 group-hover:opacity-100 transition text-[10px] bg-[#1D1D1D] text-white px-1.5 py-0.5 rounded whitespace-nowrap z-10">
                   {d.orders} · {formatMAD(d.revenue)}
                 </span>
               </div>
               <div className="w-full rounded-t bg-gradient-to-t from-[#6E44FF] to-[#9B7BFF] transition-all" style={{ height: `${(d.orders / maxVal) * 100}%`, minHeight: d.orders > 0 ? 4 : 1 }} />
-              <span className="text-[9px] text-[#aaa] mt-1.5 truncate w-full text-center">{fmtLabel(d.label)}</span>
+              <span className="text-[9px] text-[#aaa] mt-1.5 truncate w-full text-center leading-tight">{fmtLabel(d.label)}</span>
             </div>
           ))}
+        </div>
+        
+        {/* Legend explaining the time ranges */}
+        <div className="mt-4 text-xs text-[#999] border-t border-[#f0f0f0] pt-3">
+          {range === 'day' && <p>📅 Showing daily data for the selected period</p>}
+          {range === 'week' && <p>📊 Showing weekly data (W01 = Week 1, W52 = Week 52)</p>}
+          {range === 'month' && <p>📈 Showing monthly data across the year</p>}
+          {range === 'year' && <p>📆 Showing yearly data</p>}
         </div>
       </div>
 
