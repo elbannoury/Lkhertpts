@@ -94,11 +94,11 @@ const ProductPage: React.FC = () => {
     <Shell>
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-12 grid md:grid-cols-2 gap-12 lg:gap-20">
         <div className="sticky top-24 self-start">
-          <div className="bg-[#F2ECE6] rounded-sm overflow-hidden aspect-[4/5] flex items-center justify-center">
+          <div className="bg-[#F2ECE6] rounded-sm overflow-hidden">
             <img
               src={product.images?.[activeImage] || product.images?.[0]}
               alt={product.name}
-              className="w-full h-full object-contain"
+              className="w-full h-auto block"
             />
           </div>
           {(product.images || []).length > 1 && (
