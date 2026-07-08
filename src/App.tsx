@@ -11,6 +11,7 @@ import Inspiration from "@/components/sections/Inspiration";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import CollectionPage from "./pages/CollectionPage";
+import CollectionsPage from "./pages/CollectionsPage";
 import RoomPage from "./pages/RoomPage";
 import ProductPage from "./pages/ProductPage";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 <Route path="/inspiration" element={<InspirationPage />} />
+                <Route path="/collections" element={<CollectionsPage />} />
                 <Route path="/collections/:handle" element={<CollectionPage />} />
                 <Route path="/rooms/:name" element={<RoomPage />} />
                 <Route path="/products/:handle" element={<ProductPage />} />
