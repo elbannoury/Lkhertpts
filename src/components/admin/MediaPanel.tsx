@@ -98,9 +98,17 @@ const MediaPanel: React.FC = () => {
     try {
       if (confirmDel.kind === 'one') {
         // Deletes EXACTLY one row by its id — other media are never affected.
-        await cms('cms_media_delete', { id: confirmDel.item.id });
+        const r = await cms('cms_media_delete', { id: confirmDel.item.id });
+        if (r?.file_kept) {
+          setNotice(`Removed from the library, but the file itself was kept — it's still used by ${(r.used_by || []).join(', ') || 'a product/category'}.`);
+          setTimeout(() => setNotice(null), 6000);
+        }
       } else {
-        await cms('cms_media_delete_many', { ids: confirmDel.items.map((m) => m.id) });
+        const r = await cms('cms_media_delete_many', { ids: confirmDel.items.map((m) => m.id) });
+        if (r?.files_kept?.length) {
+          setNotice(`Removed from the library. ${r.files_kept.length} file(s) were kept in storage because they're still in use elsewhere.`);
+          setTimeout(() => setNotice(null), 6000);
+        }
         exitSelect();
       }
       await load();
