@@ -218,7 +218,7 @@ const ProductsPanel: React.FC = () => {
 
       {/* editor */}
       {editing && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setEditing(null)}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white w-full max-w-3xl max-h-[94vh] overflow-auto rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-white/95 backdrop-blur border-b border-[#eee] px-6 py-4 flex items-center justify-between z-10">
               <h3 className="font-serif text-xl">{editing.id ? 'Edit' : 'New'} Product</h3>
