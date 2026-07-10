@@ -54,18 +54,23 @@ const AnalyticsPanel: React.FC = () => {
           </div>
         </div>
         <div className="flex items-end gap-1.5 h-48">
-          {series.length === 0 && <p className="text-sm text-[#bbb]">No data yet.</p>}
-          {series.map((d) => (
-            <div key={d.label} className="group flex-1 flex flex-col items-center justify-end h-full min-w-0">
-              <div className="relative w-full flex justify-center">
-                <span className="absolute -top-6 opacity-0 group-hover:opacity-100 transition text-[10px] bg-[#1D1D1D] text-white px-1.5 py-0.5 rounded whitespace-nowrap z-10">
-                  {d.orders} · {formatMAD(d.revenue)}
-                </span>
+          {series.map((d) => {
+            const hasOrders = d.orders > 0;
+            return (
+              <div key={d.label} className="group flex-1 flex flex-col items-center justify-end h-full min-w-0">
+                <div className="relative w-full flex justify-center">
+                  <span className="absolute -top-6 opacity-0 group-hover:opacity-100 transition text-[10px] bg-[#1D1D1D] text-white px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+                    {d.orders} · {formatMAD(d.revenue)}
+                  </span>
+                </div>
+                <div
+                  className={`w-full rounded-t transition-all ${hasOrders ? 'bg-gradient-to-t from-[#6E44FF] to-[#9B7BFF]' : 'bg-[#EBE7DF] border-t border-dashed border-[#D8D2C6]'}`}
+                  style={{ height: hasOrders ? `${(d.orders / maxVal) * 100}%` : '3%', minHeight: hasOrders ? 4 : 3 }}
+                />
+                <span className={`text-[9px] mt-1.5 truncate w-full text-center ${hasOrders ? 'text-[#777]' : 'text-[#bbb]'}`}>{fmtLabel(d.label)}</span>
               </div>
-              <div className="w-full rounded-t bg-gradient-to-t from-[#6E44FF] to-[#9B7BFF] transition-all" style={{ height: `${(d.orders / maxVal) * 100}%`, minHeight: d.orders > 0 ? 4 : 1 }} />
-              <span className="text-[9px] text-[#aaa] mt-1.5 truncate w-full text-center">{fmtLabel(d.label)}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
