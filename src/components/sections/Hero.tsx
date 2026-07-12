@@ -29,7 +29,7 @@ const Hero: React.FC = () => {
         </h1>
         <p className="text-white/85 text-lg mt-6 max-w-md font-light reveal-up d1">{t('hero.sub')}</p>
         <div className="flex flex-wrap gap-4 mt-10 reveal-up d2">
-          <Link to="/collections/best-sellers" className="btn-pk px-9 py-4 text-xs uppercase">
+          <Link to="/collections" className="btn-pk px-9 py-4 text-xs uppercase">
             {t('hero.cta1')}
           </Link>
           <Link to="/custom" className="btn-pk-purple px-9 py-4 text-xs uppercase">
