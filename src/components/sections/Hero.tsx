@@ -31,7 +31,7 @@ const Hero: React.FC = () => {
         <div className="flex flex-wrap gap-4 mt-10 reveal-up d2">
           <Link to="/collections" className="btn-pk px-9 py-4 text-xs uppercase">
             {t('hero.cta1')}
-          </Link>
+          </Link> 
           <Link to="/custom" className="btn-pk-purple px-9 py-4 text-xs uppercase">
             باغي تصميم مخصص؟
           </Link>
