@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { HERO_IMAGE } from '@/data/catalog';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
- 
+
 const Hero: React.FC = () => {
   const { t } = useI18n();
   const { settings } = useSiteSettings();
@@ -29,7 +29,7 @@ const Hero: React.FC = () => {
         </h1>
         <p className="text-white/85 text-lg mt-6 max-w-md font-light reveal-up d1">{t('hero.sub')}</p>
         <div className="flex flex-wrap gap-4 mt-10 reveal-up d2">
-          <Link to="/collections" className="btn-pk px-9 py-4 text-xs uppercase">
+          <Link to="/collections/best-sellers" className="btn-pk px-9 py-4 text-xs uppercase">
             {t('hero.cta1')}
           </Link>
           <Link to="/custom" className="btn-pk-purple px-9 py-4 text-xs uppercase">
@@ -51,6 +51,6 @@ const Hero: React.FC = () => {
       </div>
     </section>
   );
-}; 
+};
 
 export default Hero;
