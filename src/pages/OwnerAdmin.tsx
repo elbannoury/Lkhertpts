@@ -29,7 +29,20 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
   // into the admin page (and vice-versa).
   const AUTH_KEY = `pts_auth_${portal}`;
 
+  // Land on the first tab this admin actually has access to (owner always lands
+  // on the dashboard; an admin with zero granted permissions lands on chat).
+  const firstTabFor = (loginRole: string, perms: string[]) => {
+    if (loginRole === 'owner') return 'dashboard';
+    if (perms.includes('products')) return 'products';
+    if (perms.includes('orders')) return 'orders';
+    return 'chat';
+  };
+
   const [identity, setIdentity] = useState<any>(null);
+  const [myPerms, setMyPerms] = useState<string[]>([]);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState(0);
+  const [unreadChat, setUnreadChat] = useState(0);
   const [idForm, setIdForm] = useState({ display_name: '', color: CHAT_COLORS[0], emoji: CHAT_EMOJIS[0] });
   const [idSaved, setIdSaved] = useState(false);
 
@@ -64,10 +77,11 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
         const { data } = await supabase.functions.invoke('owner-auth', { body: { action: 'login', ...c } });
         if (data?.ok && !portalMismatch(data.role)) {
           setCreds(c); setRole(data.role); setAuthed(true);
+          setMyPerms(Array.isArray(data.user?.permissions) ? data.user.permissions : []);
           localStorage.setItem('pts_auth', JSON.stringify(c)); // keep cms() helper authed after refresh
           localStorage.setItem('pts_role', data.role);
           if (data.identity) { setIdentity(data.identity); setIdForm({ display_name: data.identity.display_name || c.username, color: data.identity.color || CHAT_COLORS[0], emoji: data.identity.emoji || CHAT_EMOJIS[0] }); localStorage.setItem('pts_identity', JSON.stringify(data.identity)); }
-          setTab(data.role === 'owner' ? 'dashboard' : 'products');
+          setTab(firstTabFor(data.role, Array.isArray(data.user?.permissions) ? data.user.permissions : []));
         } else {
           localStorage.removeItem(AUTH_KEY); localStorage.removeItem('pts_role');
         }
@@ -85,6 +99,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
       const mismatch = portalMismatch(data.role);
       if (mismatch) { setErr(mismatch); setLoading(false); return; }
       setRole(data.role); setAuthed(true);
+      setMyPerms(Array.isArray(data.user?.permissions) ? data.user.permissions : []);
       localStorage.setItem(AUTH_KEY, JSON.stringify(creds));
       // cms() helper reads the shared 'pts_auth' key — keep it in sync with the active session.
       localStorage.setItem('pts_auth', JSON.stringify(creds));
@@ -98,7 +113,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
         });
         localStorage.setItem('pts_identity', JSON.stringify(data.identity));
       }
-      setTab(data.role === 'owner' ? 'dashboard' : 'products');
+      setTab(firstTabFor(data.role, Array.isArray(data.user?.permissions) ? data.user.permissions : []));
     } catch { setErr('Access denied'); }
     setLoading(false);
   };
@@ -149,6 +164,75 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed]);
+
+  // ─── Push notifications (real Web Push — works even with the tab closed) ───
+  const VAPID_PUBLIC_KEY = 'BHZC-rco9nZ0-7MStscqm8JaHYsIuWoErPuzHdn0aeUBqc7EnJ_pPViAzizniiTdPeEIeMfkIMeHc0J5K3IX0Cg';
+  const urlBase64ToUint8Array = (base64: string) => {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(b64);
+    return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+  };
+
+  useEffect(() => {
+    if (!authed || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    navigator.serviceWorker.ready.then((reg) => reg.pushManager.getSubscription()).then((sub) => setPushEnabled(!!sub)).catch(() => {});
+  }, [authed]);
+
+  const enablePush = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) { alert('Push notifications are not supported in this browser.'); return; }
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') return;
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) });
+      const json = sub.toJSON();
+      await cms('push_subscribe', { endpoint: json.endpoint, keys: json.keys });
+      setPushEnabled(true);
+    } catch (e: any) {
+      alert(e?.message || 'Could not enable push notifications.');
+    }
+  };
+
+  const disablePush = async () => {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) { await cms('push_unsubscribe', { endpoint: sub.endpoint }); await sub.unsubscribe(); }
+    } finally {
+      setPushEnabled(false);
+    }
+  };
+
+  // ─── In-dashboard badges: pending orders + unread chat since last visit ───
+  useEffect(() => {
+    if (!authed) return;
+    const canSeeOrders = role === 'owner' || myPerms.includes('orders');
+    const refresh = async () => {
+      try {
+        if (canSeeOrders) {
+          const r = await cms('cms_orders_list', { limit: 100 });
+          setPendingOrders((r?.orders || []).filter((o: any) => o.status === 'pending').length);
+        }
+        const c = await cms('chat_list');
+        const total = (c?.messages || []).length;
+        const seen = Number(localStorage.getItem('pts_chat_seen_count') || 0);
+        setUnreadChat(Math.max(0, total - seen));
+      } catch { /* silent — badges are best-effort */ }
+    };
+    refresh();
+    const id = setInterval(refresh, 45000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authed, role, myPerms]);
+
+  const openTab = (id: string) => {
+    setTab(id);
+    if (id === 'chat') {
+      cms('chat_list').then((c) => localStorage.setItem('pts_chat_seen_count', String((c?.messages || []).length))).then(() => setUnreadChat(0)).catch(() => {});
+    }
+  };
 
 
   const loadOwnerExtras = async () => {
@@ -270,10 +354,10 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
 
   const allTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, owner: true },
-    { id: 'products', label: 'Products', icon: Package, owner: false },
-    { id: 'categories', label: 'Categories', icon: FolderTree, owner: false },
-    { id: 'media', label: 'Media', icon: Image, owner: false },
-    { id: 'orders', label: 'Orders', icon: ShoppingBag, owner: false },
+    { id: 'products', label: 'Products', icon: Package, owner: false, perm: 'products' },
+    { id: 'categories', label: 'Categories', icon: FolderTree, owner: true },
+    { id: 'media', label: 'Media', icon: Image, owner: true },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag, owner: false, perm: 'orders' },
     { id: 'chat', label: 'Team Chat', icon: MessageSquare, owner: false },
     { id: 'customers', label: 'Customers', icon: Users, owner: true },
     { id: 'notify', label: 'Notifications', icon: Bell, owner: true },
@@ -282,7 +366,9 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
     { id: 'activity', label: 'Activity Log', icon: Activity, owner: true },
     { id: 'admins', label: 'Admins', icon: ShieldCheck, owner: true },
   ];
-  const tabs = allTabs.filter((t) => role === 'owner' || !t.owner);
+  // Owner sees everything. An admin only sees a tab when it isn't owner-exclusive
+  // AND (it needs no specific permission, or they were actually granted it).
+  const tabs = allTabs.filter((t) => role === 'owner' || (!t.owner && (!t.perm || myPerms.includes(t.perm))));
 
   return (
     <div className="min-h-screen bg-[#FAF8F5] flex">
@@ -298,26 +384,44 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
           </div>
         )}
         <nav className="space-y-1">
-          {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded ${tab === t.id ? 'bg-[#6E44FF] text-white' : 'text-[#aaa] hover:text-white'}`}>
-              <t.icon size={16} /> {t.label}
-            </button>
-          ))}
+          {tabs.map((t) => {
+            const badge = t.id === 'orders' ? pendingOrders : t.id === 'chat' ? unreadChat : 0;
+            return (
+              <button key={t.id} onClick={() => openTab(t.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded ${tab === t.id ? 'bg-[#6E44FF] text-white' : 'text-[#aaa] hover:text-white'}`}>
+                <t.icon size={16} /> {t.label}
+                {badge > 0 && <span className="ml-auto text-[10px] font-semibold bg-[#FF6A00] text-white rounded-full px-1.5 py-0.5 min-w-[18px] text-center">{badge > 99 ? '99+' : badge}</span>}
+              </button>
+            );
+          })}
         </nav>
+        <button
+          onClick={pushEnabled ? disablePush : enablePush}
+          className={`mt-4 w-full flex items-center gap-2 px-3 py-2.5 text-xs rounded border transition ${pushEnabled ? 'border-[#6E44FF] text-[#6E44FF] bg-[#6E44FF]/10' : 'border-white/15 text-[#aaa] hover:text-white'}`}
+        >
+          <Bell size={14} /> {pushEnabled ? 'Alerts on' : 'Enable alerts'}
+        </button>
         <button onClick={() => { setAuthed(false); localStorage.removeItem(AUTH_KEY); localStorage.removeItem('pts_auth'); localStorage.removeItem('pts_role'); localStorage.removeItem('pts_identity'); setCreds({ username: '', password: '' }); }} className="mt-8 text-xs tracking-[0.15em] uppercase text-[#666] hover:text-white">Sign Out</button>
       </aside>
 
       <main className="flex-1 p-6 lg:p-10 overflow-x-hidden">
         <div className="md:hidden flex gap-2 mb-6 overflow-x-auto">
-          {tabs.map((t) => <button key={t.id} onClick={() => setTab(t.id)} className={`px-4 py-2 text-xs uppercase whitespace-nowrap ${tab === t.id ? 'bg-[#1D1D1D] text-white' : 'bg-[#F2ECE6]'}`}>{t.label}</button>)}
+          {tabs.map((t) => {
+            const badge = t.id === 'orders' ? pendingOrders : t.id === 'chat' ? unreadChat : 0;
+            return (
+              <button key={t.id} onClick={() => openTab(t.id)} className={`relative px-4 py-2 text-xs uppercase whitespace-nowrap ${tab === t.id ? 'bg-[#1D1D1D] text-white' : 'bg-[#F2ECE6]'}`}>
+                {t.label}
+                {badge > 0 && <span className="absolute -top-1.5 -right-1.5 text-[9px] font-semibold bg-[#FF6A00] text-white rounded-full px-1 min-w-[16px] text-center">{badge > 99 ? '99+' : badge}</span>}
+              </button>
+            );
+          })}
         </div>
         <h2 className="font-serif text-3xl mb-8 capitalize">{tabs.find((t) => t.id === tab)?.label}</h2>
 
-        {tab === 'dashboard' && <AnalyticsPanel />}
-        {tab === 'products' && <ProductsPanel />}
-        {tab === 'categories' && <CategoriesPanel />}
-        {tab === 'media' && <MediaPanel />}
-        {tab === 'orders' && <OrdersPanel />}
+        {tab === 'dashboard' && role === 'owner' && <AnalyticsPanel />}
+        {tab === 'products' && (role === 'owner' || myPerms.includes('products')) && <ProductsPanel />}
+        {tab === 'categories' && role === 'owner' && <CategoriesPanel />}
+        {tab === 'media' && role === 'owner' && <MediaPanel />}
+        {tab === 'orders' && (role === 'owner' || myPerms.includes('orders')) && <OrdersPanel />}
         {tab === 'customers' && role === 'owner' && <CustomersPanel />}
         {tab === 'settings' && role === 'owner' && <SettingsPanel />}
         {tab === 'affiliates' && role === 'owner' && <AffiliatesPanel />}
@@ -428,8 +532,6 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
                   { label: 'Products only', perms: ['products'] },
                   { label: 'Orders only', perms: ['orders'] },
                   { label: 'Products + Orders', perms: ['products', 'orders'] },
-                  { label: 'Affiliators only', perms: ['affiliates'] },
-                  { label: 'Products + Orders + Affiliators', perms: ['products', 'orders', 'affiliates'] },
                 ].map((opt) => {
                   const active = adminPerms.length === opt.perms.length && opt.perms.every((p) => adminPerms.includes(p));
                   return (
@@ -460,11 +562,10 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      {['products', 'orders', 'affiliates'].map((p) => {
+                      {['products', 'orders'].map((p) => {
                         const on = (a.permissions || []).includes(p);
-                        const label = p === 'affiliates' ? 'affiliators' : p;
                         return (
-                          <button key={p} onClick={() => togglePerm(a, p)} className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wide border transition ${on ? 'bg-[#F2ECE6] border-[#6E44FF] text-[#6E44FF]' : 'border-[#eee] text-[#bbb] hover:border-[#6E44FF]'}`}>{label}</button>
+                          <button key={p} onClick={() => togglePerm(a, p)} className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wide border transition ${on ? 'bg-[#F2ECE6] border-[#6E44FF] text-[#6E44FF]' : 'border-[#eee] text-[#bbb] hover:border-[#6E44FF]'}`}>{p}</button>
                         );
                       })}
                     </div>
