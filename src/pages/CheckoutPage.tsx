@@ -5,7 +5,6 @@ import Shell from '@/components/Shell';
 import { useCart } from '@/contexts/CartContext';
 import { formatMAD } from '@/data/catalog';
 import { getRefCode, clearRef } from '@/lib/affiliate';
-import { crmSubscribe } from '@/lib/constants';
 
 
 const MOROCCAN_CITIES = ['Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger', 'Agadir', 'Meknès', 'Oujda', 'Kénitra', 'Tétouan', 'Other'];
@@ -27,9 +26,16 @@ const CheckoutPage: React.FC = () => {
     setSubmitting(true); setError('');
 
     try {
+      const { data: existingCustomer } = await supabase
+        .from('ecom_customers')
+        .select('tags')
+        .eq('email', form.email || `${form.phone}@pitsiky.order`)
+        .maybeSingle();
+      const tags = Array.from(new Set([...(existingCustomer?.tags || []), 'customer']));
+
       const { data: customer } = await supabase
         .from('ecom_customers')
-        .upsert({ email: form.email || `${form.phone}@pitsiky.order`, name: form.name, phone: form.phone }, { onConflict: 'email' })
+        .upsert({ email: form.email || `${form.phone}@pitsiky.order`, name: form.name, phone: form.phone, sms_opt_in: sms, tags }, { onConflict: 'email' })
         .select('id').single();
 
       const refCode = getRefCode();
@@ -47,8 +53,7 @@ const CheckoutPage: React.FC = () => {
           shipping_address: { name: form.name, phone: form.phone, city: form.city, address: form.address, ref_code: refCode || null },
           notes: form.notes,
         })
-        .select('id').single();
-
+        .select('id, order_number').single();
 
       if (!order) throw new Error('Could not create order');
 
@@ -69,7 +74,7 @@ const CheckoutPage: React.FC = () => {
       supabase.functions.invoke('send-order-notifications', {
         body: {
           order: {
-            order_id: order.id.slice(0, 8).toUpperCase(),
+            order_id: order.order_number,
             customer_name: form.name,
             phone: form.phone,
             city: form.city,
@@ -82,16 +87,7 @@ const CheckoutPage: React.FC = () => {
         },
       }).catch(() => {});
 
-      // CRM — add buyer to the CRM (correct project id via shared helper)
-      crmSubscribe({
-        email: form.email || undefined,
-        name: form.name,
-        phone: form.phone || undefined,
-        sms_opt_in: sms === true,
-        source: 'checkout',
-        tags: ['customer'],
-      });
-
+      // Buyer is already captured on the ecom_customers upsert above (tags, sms_opt_in).
 
       // Referral was captured onto the order's shipping_address.ref_code above.
       // The affiliate is only credited later, when the owner marks this order
@@ -100,7 +96,7 @@ const CheckoutPage: React.FC = () => {
 
 
       clearCart();
-      navigate(`/order-confirmed/${order.id.slice(0, 8).toUpperCase()}`);
+      navigate(`/order-confirmed/${order.order_number}`);
 
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.');
