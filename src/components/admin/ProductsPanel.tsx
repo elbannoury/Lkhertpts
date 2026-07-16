@@ -211,6 +211,14 @@ const ProductsPanel: React.FC = () => {
                   by {p.metadata.created_by.name}
                 </span>
               )}
+              {p.metadata?.updated_by?.name && p.metadata.updated_by.id !== p.metadata?.created_by?.id && (
+                <span className="inline-flex items-center gap-1 mt-2 ml-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                  style={{ background: `${p.metadata.updated_by.color || '#888'}1a`, color: p.metadata.updated_by.color || '#666', border: `1px solid ${p.metadata.updated_by.color || '#ccc'}55` }}
+                  title={`Last edited by ${p.metadata.updated_by.name}${p.metadata.updated_by.at ? ' · ' + new Date(p.metadata.updated_by.at).toLocaleDateString() : ''}`}>
+                  <span>{p.metadata.updated_by.emoji || '✏️'}</span>
+                  edited by {p.metadata.updated_by.name}
+                </span>
+              )}
             </div>
           </div>
         ))}
