@@ -35,6 +35,8 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
     if (loginRole === 'owner') return 'dashboard';
     if (perms.includes('products')) return 'products';
     if (perms.includes('orders')) return 'orders';
+    if (perms.includes('categories')) return 'categories';
+    if (perms.includes('media')) return 'media';
     return 'chat';
   };
 
@@ -355,8 +357,8 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
   const allTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, owner: true },
     { id: 'products', label: 'Products', icon: Package, owner: false, perm: 'products' },
-    { id: 'categories', label: 'Categories', icon: FolderTree, owner: true },
-    { id: 'media', label: 'Media', icon: Image, owner: true },
+    { id: 'categories', label: 'Categories', icon: FolderTree, owner: false, perm: 'categories' },
+    { id: 'media', label: 'Media', icon: Image, owner: false, perm: 'media' },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, owner: false, perm: 'orders' },
     { id: 'chat', label: 'Team Chat', icon: MessageSquare, owner: false },
     { id: 'customers', label: 'Customers', icon: Users, owner: true },
@@ -419,8 +421,8 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
 
         {tab === 'dashboard' && role === 'owner' && <AnalyticsPanel />}
         {tab === 'products' && (role === 'owner' || myPerms.includes('products')) && <ProductsPanel />}
-        {tab === 'categories' && role === 'owner' && <CategoriesPanel />}
-        {tab === 'media' && role === 'owner' && <MediaPanel />}
+        {tab === 'categories' && (role === 'owner' || myPerms.includes('categories')) && <CategoriesPanel />}
+        {tab === 'media' && (role === 'owner' || myPerms.includes('media')) && <MediaPanel />}
         {tab === 'orders' && (role === 'owner' || myPerms.includes('orders')) && <OrdersPanel />}
         {tab === 'customers' && role === 'owner' && <CustomersPanel />}
         {tab === 'settings' && role === 'owner' && <SettingsPanel />}
@@ -532,6 +534,8 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
                   { label: 'Products only', perms: ['products'] },
                   { label: 'Orders only', perms: ['orders'] },
                   { label: 'Products + Orders', perms: ['products', 'orders'] },
+                  { label: 'Products + Categories + Media', perms: ['products', 'categories', 'media'] },
+                  { label: 'Full operations (all four)', perms: ['products', 'orders', 'categories', 'media'] },
                 ].map((opt) => {
                   const active = adminPerms.length === opt.perms.length && opt.perms.every((p) => adminPerms.includes(p));
                   return (
@@ -562,7 +566,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
-                      {['products', 'orders'].map((p) => {
+                      {['products', 'orders', 'categories', 'media'].map((p) => {
                         const on = (a.permissions || []).includes(p);
                         return (
                           <button key={p} onClick={() => togglePerm(a, p)} className={`px-3 py-1 rounded-full text-[10px] uppercase tracking-wide border transition ${on ? 'bg-[#F2ECE6] border-[#6E44FF] text-[#6E44FF]' : 'border-[#eee] text-[#bbb] hover:border-[#6E44FF]'}`}>{p}</button>
