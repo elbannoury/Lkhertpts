@@ -12,13 +12,21 @@ const OrderConfirmed: React.FC = () => {
           <Check className="text-white" size={30} />
         </div>
         <h1 className="font-serif text-4xl mb-4">Order Received</h1>
-        <p className="text-[#8D8D8D] leading-relaxed mb-2">
-          Thank you. Your order <span className="text-[#1D1D1D] font-medium">#{id}</span> has been placed.
-        </p>
+        <p className="text-[#8D8D8D] leading-relaxed mb-2">Thank you. Your order has been placed.</p>
+        <div className="inline-block bg-[#F2ECE6] rounded-xl px-6 py-4 my-6">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-[#8D8D8D] mb-1">Your order number</p>
+          <p className="font-mono text-2xl text-[#1D1D1D] tracking-widest">{id}</p>
+        </div>
+        <p className="text-[#8D8D8D] mb-2">Save this number — you'll need it to track your order.</p>
         <p className="text-[#8D8D8D] mb-10">Our team will contact you shortly to confirm delivery. No payment is needed online.</p>
-        <Link to="/" className="inline-block bg-[#1D1D1D] text-white px-8 py-4 text-xs tracking-[0.2em] uppercase hover:bg-[#6E44FF] transition-colors">
-          Continue Exploring
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link to="/track" className="inline-block bg-[#6E44FF] text-white px-8 py-4 text-xs tracking-[0.2em] uppercase hover:bg-[#5a37d6] transition-colors">
+            Track This Order
+          </Link>
+          <Link to="/" className="inline-block bg-[#1D1D1D] text-white px-8 py-4 text-xs tracking-[0.2em] uppercase hover:bg-[#6E44FF] transition-colors">
+            Continue Exploring
+          </Link>
+        </div>
       </div>
     </Shell>
   );
