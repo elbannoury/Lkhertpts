@@ -211,6 +211,7 @@ const CategoriesPanel: React.FC = () => {
   };
 
   const renderActions = (c: Cat, sm = false) => {
+    if (!owner) return null;
     const sz = sm ? 14 : 16;
     const hidden = c.is_visible === false;
     const arch = c.archived === true;
@@ -236,14 +237,15 @@ const CategoriesPanel: React.FC = () => {
   return (
     <div>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <p className="text-sm text-[#8D8D8D]">{tops.length} main · {visibleSet.length - tops.length} sub · drag to reorder · name, logo, cover, banner, SEO, featured, visibility, archive & products</p>
+        <p className="text-sm text-[#8D8D8D]">{tops.length} main · {visibleSet.length - tops.length} sub{owner ? ' · drag to reorder · name, logo, cover, banner, SEO, featured, visibility, archive & products' : ''}</p>
         <div className="flex items-center gap-2">
+          {!owner && <span className="text-xs px-3 py-2 rounded-lg bg-[#F2ECE6] text-[#999]">View only</span>}
           {archivedCount > 0 && (
             <button onClick={() => setShowArchived((v) => !v)} className={`text-xs flex items-center gap-1.5 px-3 py-2 rounded-lg border ${showArchived ? 'bg-[#1D1D1D] text-white border-[#1D1D1D]' : 'border-[#e6e6e6] text-[#666] hover:border-[#1D1D1D]'}`}>
               <Archive size={14} /> {showArchived ? 'Hide archived' : `Archived (${archivedCount})`}
             </button>
           )}
-          <button onClick={() => { setEditing({ ...empty }); setUploadErr(null); }} className="bg-[#C9A23F] text-black font-medium px-4 py-2 flex items-center gap-1 text-sm hover:bg-[#E8C766] rounded-lg"><Plus size={15} /> New Collection</button>
+          {owner && <button onClick={() => { setEditing({ ...empty }); setUploadErr(null); }} className="bg-[#C9A23F] text-black font-medium px-4 py-2 flex items-center gap-1 text-sm hover:bg-[#E8C766] rounded-lg"><Plus size={15} /> New Collection</button>}
         </div>
       </div>
 
@@ -265,7 +267,7 @@ const CategoriesPanel: React.FC = () => {
           return (
             <div
               key={c.id}
-              draggable={!filter}
+              draggable={owner && !filter}
               onDragStart={() => setDragId(c.id!)}
               onDragOver={(e) => { e.preventDefault(); }}
               onDrop={() => onDrop(c.id)}
@@ -307,7 +309,7 @@ const CategoriesPanel: React.FC = () => {
                   ))}
                 </div>
               )}
-              {open && (
+              {open && owner && (
                 <div className="border-t border-[#f3f3f3] px-14 py-2">
                   <button onClick={() => { setEditing({ ...empty, parent_id: c.id, position: kids.length }); setUploadErr(null); }} className="text-[#C9A23F] text-xs flex items-center gap-1 hover:text-[#9c7a1e]"><Plus size={13} /> Add subcollection</button>
                 </div>
