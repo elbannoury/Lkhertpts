@@ -51,7 +51,7 @@ const ProductCard: React.FC<Props> = ({ product }) => {
           <div className="absolute bottom-0 inset-x-0 h-[3px] bg-gradient-to-r from-[#FF6A00] via-[#FF9438] to-[#E04E00]" />
 
           {/* quick view chip */}
-          <span className="card3d-pop absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-white/90 dark:bg-black/70 text-black dark:text-[#FF9438] flex items-center justify-center opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-lg">
+          <span className="card3d-pop absolute top-3 right-3 z-10 h-9 w-9 rounded-full bg-white/90 dark:bg-black/70 text-black dark:text-[#FF9438] flex items-center justify-center opacity-0 -translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all shadow-md">
             <ArrowUpRight size={16} />
           </span>
 
