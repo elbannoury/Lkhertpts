@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import { captureRefFromUrl } from "@/lib/affiliate";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -33,6 +34,11 @@ const InspirationPage = () => (
     <div className="pt-6"><Inspiration /></div>
   </Shell>
 );
+
+// Runs once when the app first loads — catches ?ref=CODE no matter which page
+// the customer actually lands on (most commonly a shared product link), not
+// just the homepage.
+captureRefFromUrl();
 
 const App = () => (
   <ThemeProvider defaultTheme="light">
