@@ -1,6 +1,8 @@
 // Affiliate referral helpers.
-// A shopper lands on /products/xyz?ref=CODE — we persist CODE so that when they
-// later check out the order is attributed to the affiliate.
+// A shopper can land on ANY page — most often a shared product link like
+// /products/xyz?ref=CODE — and we persist CODE (first-touch: the FIRST valid
+// referral wins, so a later click from a different link never steals credit)
+// so that whenever they eventually check out, the order is attributed correctly.
 
 const KEY = 'pts_ref';
 
@@ -8,9 +10,18 @@ export function captureRefFromUrl() {
   try {
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
-    if (ref) {
-      localStorage.setItem(KEY, JSON.stringify({ code: ref.trim().toLowerCase(), ts: Date.now() }));
-    }
+    if (!ref) return;
+    // First-touch attribution: if a still-valid referral is already stored,
+    // don't let a later link (even from a different affiliate) overwrite it.
+    if (getRefCode()) return;
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        code: ref.trim().toLowerCase(),
+        ts: Date.now(),
+        landing: window.location.pathname + window.location.search,
+      }),
+    );
   } catch { /* ignore */ }
 }
 
