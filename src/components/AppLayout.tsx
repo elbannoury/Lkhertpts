@@ -14,7 +14,6 @@ import AlwaysFresh from '@/components/sections/AlwaysFresh';
 import NewsTicker from '@/components/NewsTicker';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
-import { captureRefFromUrl } from '@/lib/affiliate';
 
 const AppLayout: React.FC = () => {
   const { t } = useI18n();
@@ -22,7 +21,6 @@ const AppLayout: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
 
   useEffect(() => {
-    captureRefFromUrl();
     supabase
       .from('ecom_products')
       .select('*, variants:ecom_product_variants(*)')
