@@ -25,7 +25,7 @@ export const ROOMS: { name: string; image: string }[] = [
 ];
 
 export const HERO_IMAGE =
-  'https://d64gsuwffb70l.cloudfront.net/6a3865af3eeee9d3bbe8a286_1782081088053_ba913050.jpg';
+  '';
 
 export const INSPIRATION_IMAGES = [
   '',
