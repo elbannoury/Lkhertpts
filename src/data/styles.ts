@@ -1,12 +1,12 @@
 // Style cards (16:9) and fallback car-brand category badges for PITSIKY.
 
 const STYLE_IMGS = [
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090311555_94dd627f.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090312576_a0ae6c3d.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090315287_cd8cb254.png',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090315550_414064c2.png',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090317530_2b66f0da.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090321633_7b6b054c.png',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
 ];
 
 export const STYLES: { en: string; ar: string; handle: string; image: string }[] = [
@@ -19,14 +19,14 @@ export const STYLES: { en: string; ar: string; handle: string; image: string }[]
 ];
 
 const BRAND_IMGS = [
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090339699_82114f59.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090341846_279ed566.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090341813_18d660b8.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090345357_1cd5328c.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090342089_7cf1755a.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090347123_fe7e9cc3.jpg',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090348753_fd65cfdd.png',
-  'https://d64gsuwffb70l.cloudfront.net/6a38876cda43ec53fca90041_1782090348396_33140114.png',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
+  '',
 ];
 
 // Fallback brand badges shown when the Owner hasn't created categories yet.
