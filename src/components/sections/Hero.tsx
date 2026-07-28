@@ -35,9 +35,6 @@ const Hero: React.FC = () => {
           <Link to="/custom" className="btn-pk-purple px-9 py-4 text-xs uppercase">
             باغي تصميم مخصص؟
           </Link>
-          <Link to="/visualize" className="btn-pk-ghost px-8 py-4 text-xs uppercase">
-            {t('hero.cta2')}
-          </Link>
         </div>
         {/* trust chips */}
         <div className="flex flex-wrap gap-3 mt-10 reveal-up d3">
