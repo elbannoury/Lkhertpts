@@ -17,7 +17,6 @@ import RoomPage from "./pages/RoomPage";
 import ProductPage from "./pages/ProductPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import OrderConfirmed from "./pages/OrderConfirmed";
-import Visualize from "./pages/Visualize";
 import OwnerAdmin from "./pages/OwnerAdmin";
 import OrderTracking from "./pages/OrderTracking";
 import CustomPoster from "./pages/CustomPoster";
@@ -61,7 +60,6 @@ const App = () => (
                 <Route path="/products/:handle" element={<ProductPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/order-confirmed/:id" element={<OrderConfirmed />} />
-                <Route path="/visualize" element={<Visualize />} />
                 <Route path="/adminsofpitsiky" element={<OwnerAdmin portal="admin" />} />
                 <Route path="/theownerofpts1" element={<OwnerAdmin portal="owner" />} />
 
