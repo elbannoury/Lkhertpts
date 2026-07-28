@@ -92,8 +92,8 @@ const ProductPage: React.FC = () => {
 
   return (
     <Shell>
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-10 py-12 grid md:grid-cols-2 gap-12 lg:gap-20">
-        <div className="sticky top-24 self-start">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 md:py-12 grid md:grid-cols-2 gap-6 md:gap-12 lg:gap-20 pb-28 md:pb-12">
+        <div className="md:sticky md:top-24 md:self-start">
           <div className="bg-[#F2ECE6] rounded-sm overflow-hidden">
             <img
               src={product.images?.[activeImage] || product.images?.[0]}
@@ -102,7 +102,7 @@ const ProductPage: React.FC = () => {
             />
           </div>
           {(product.images || []).length > 1 && (
-            <div className="mt-4 grid grid-cols-5 gap-3">
+            <div className="mt-3 md:mt-4 grid grid-cols-4 sm:grid-cols-5 gap-2 md:gap-3">
               {product.images.map((img: string, i: number) => (
                 <button
                   key={i}
@@ -118,7 +118,7 @@ const ProductPage: React.FC = () => {
 
         <div>
           <p className="text-xs tracking-[0.2em] uppercase text-[#a59f97] mb-2">{product.product_type}</p>
-          <h1 className="font-serif text-4xl lg:text-5xl text-[#1D1D1D] leading-tight">{product.name}</h1>
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1D1D1D] leading-tight">{product.name}</h1>
           <div className="flex items-center gap-2 mt-3 text-[#FF6A00]">
             {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
             <span className="text-xs text-[#8D8D8D] ml-1">Loved by collectors</span>
@@ -175,14 +175,14 @@ const ProductPage: React.FC = () => {
           <div className="mt-6">
             <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">Quantity</p>
             <div className="inline-flex items-center border border-[#ddd]">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2">−</button>
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2.5 md:py-2 text-lg md:text-base">−</button>
               <span className="px-5">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} className="px-4 py-2">+</button>
+              <button onClick={() => setQty((q) => q + 1)} className="px-4 py-2.5 md:py-2 text-lg md:text-base">+</button>
             </div>
           </div>
 
           <button onClick={add} disabled={missingSelection || !inStock}
-            className="w-full mt-8 bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase rounded-lg hover:bg-[#FF6A00] transition-colors disabled:opacity-40">
+            className="hidden md:block w-full mt-8 bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase rounded-lg hover:bg-[#FF6A00] transition-colors disabled:opacity-40">
             {!inStock ? 'Sold Out' : missingSelection ? 'Select Options' : 'Add to Selection'}
           </button>
 
@@ -194,10 +194,20 @@ const ProductPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Mobile-only sticky add-to-cart bar — keeps price + action reachable
+          without the visitor having to scroll back up past the description. */}
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-[#eee] px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+        <span className="font-serif text-lg text-[#1D1D1D] shrink-0">{formatMAD(price)}</span>
+        <button onClick={add} disabled={missingSelection || !inStock}
+          className="flex-1 bg-[#1D1D1D] text-white py-3.5 text-xs tracking-[0.2em] uppercase rounded-lg active:bg-[#FF6A00] transition-colors disabled:opacity-40">
+          {!inStock ? 'Sold Out' : missingSelection ? 'Select Options' : 'Add to Selection'}
+        </button>
+      </div>
+
       {related.length > 0 && (
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-10 pb-24">
-          <h2 className="font-serif text-3xl mb-10">You May Also Love</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pb-24">
+          <h2 className="font-serif text-2xl md:text-3xl mb-6 md:mb-10">You May Also Love</h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8 md:gap-y-12">
             {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </div>
