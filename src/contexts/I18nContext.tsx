@@ -15,7 +15,6 @@ const DICT: Dict = {
     ar: 'حوّل المساحات الفارغة إلى فن يلهم حياتك اليومية.',
   },
   'hero.cta1': { en: 'Explore Collections', ar: 'اكتشف المجموعات' },
-  'hero.cta2': { en: 'Visualize On Your Wall', ar: 'جرّبها على جدارك' },
   'cat.eyebrow': { en: 'Curated by Brand', ar: 'مختارة حسب العلامة' },
   'cat.title': { en: 'Shop by Category', ar: 'تسوّق حسب الفئة' },
   'styles.eyebrow': { en: 'Find Your Aesthetic', ar: 'اعثر على ذوقك' },
