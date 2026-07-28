@@ -16,6 +16,7 @@ interface Cat {
   banner_image?: string | null;
   icon?: string | null;
   archived?: boolean;
+  count?: number;
 }
 
 type Size = 'big' | 'wide' | 'tall' | 'normal';
@@ -87,12 +88,22 @@ const GalleryTile: React.FC<{ tile: Tile }> = ({ tile }) => {
               <div className="absolute bottom-0 left-0 right-0 p-4">
                 <span className="block text-[9px] tracking-[0.25em] uppercase text-[#FFD27A]/90 mb-1">Collection</span>
                 <span className="block font-serif text-white text-lg md:text-2xl leading-tight">{c.title}</span>
+                {typeof c.count === 'number' && c.count > 0 && (
+                  <span className="inline-block mt-1.5 text-[10px] tracking-wide text-white/80 bg-white/10 rounded-full px-2 py-0.5">
+                    {c.count} {c.count === 1 ? 'piece' : 'pieces'}
+                  </span>
+                )}
               </div>
             </>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
               <span className="text-[9px] tracking-[0.25em] uppercase text-[#8D8D8D] mb-2">Collection</span>
               <span className="font-serif text-xl md:text-2xl text-[#1D1D1D]">{c.title}</span>
+              {typeof c.count === 'number' && c.count > 0 && (
+                <span className="mt-2 text-[10px] tracking-wide text-[#8D8D8D] bg-black/5 rounded-full px-2 py-0.5">
+                  {c.count} {c.count === 1 ? 'piece' : 'pieces'}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -147,7 +158,19 @@ const CollectionsPage: React.FC = () => {
         .eq('is_visible', true)
         .is('parent_id', null)
         .order('position');
-      setCats(((catRows as any[]) || []).filter((c) => c?.archived !== true) as Cat[]);
+      const visibleCats = ((catRows as any[]) || []).filter((c) => c?.archived !== true) as Cat[];
+
+      // Product count per collection — shown as a small badge on each tile.
+      if (visibleCats.length) {
+        const { data: links } = await supabase
+          .from('ecom_product_categories')
+          .select('category_id')
+          .in('category_id', visibleCats.map((c) => c.id));
+        const counts: Record<string, number> = {};
+        for (const l of (links as any[]) || []) counts[l.category_id] = (counts[l.category_id] || 0) + 1;
+        visibleCats.forEach((c) => { c.count = counts[c.id] || 0; });
+      }
+      setCats(visibleCats);
 
       const { data: prodRows } = await supabase
         .from('ecom_products')
