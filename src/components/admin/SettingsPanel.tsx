@@ -64,6 +64,10 @@ const SettingsPanel: React.FC = () => {
     if (!f) return; setUploading('hero');
     try { const url = await uploadMedia(f, 'hero'); patch({ hero_image: url }); } finally { setUploading(null); }
   };
+  const uploadPopupImage = async (f?: File) => {
+    if (!f) return; setUploading('popup');
+    try { const url = await uploadMedia(f, 'popup'); patch({ popup_image: url }); } finally { setUploading(null); }
+  };
   const uploadVideoFile = async (id: string, f?: File) => {
     if (!f) return; setUploading('v-' + id);
     try { const url = await uploadMedia(f, 'video'); setVideo(id, { url }); } finally { setUploading(null); }
@@ -166,6 +170,50 @@ const SettingsPanel: React.FC = () => {
             <input value={s.news_text_ar || ''} onChange={(e) => patch({ news_text_ar: e.target.value })} dir="rtl" placeholder={DEFAULT_NEWS_AR} className="w-full border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
           </div>
           <p className="text-xs text-[#bbb]">Leave blank to use the default message.</p>
+        </div>
+      </div>
+
+      {/* Welcome popup — shown to first-time visitors, fully owner-controlled */}
+      <div className="bg-white border border-[#eee] rounded-xl p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-serif text-xl flex items-center gap-2"><Sparkles size={18} className="text-[#6E44FF]" /> Welcome popup</h3>
+          <label className="flex items-center gap-2 text-sm text-[#666] cursor-pointer">
+            <input type="checkbox" checked={s.popup_enabled === true} onChange={(e) => patch({ popup_enabled: e.target.checked })} />
+            Enabled
+          </label>
+        </div>
+        <p className="text-sm text-[#8D8D8D] mb-5">A pop-up shown to visitors when they open the site. Turn it off any time — nothing shows unless it's enabled here.</p>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <input value={s.popup_title || ''} onChange={(e) => patch({ popup_title: e.target.value })} placeholder="Title (English)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <input value={s.popup_title_ar || ''} onChange={(e) => patch({ popup_title_ar: e.target.value })} dir="rtl" placeholder="العنوان (العربية)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <input value={s.popup_subtitle || ''} onChange={(e) => patch({ popup_subtitle: e.target.value })} placeholder="Subtitle (English)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm col-span-2 sm:col-span-1" />
+            <input value={s.popup_subtitle_ar || ''} onChange={(e) => patch({ popup_subtitle_ar: e.target.value })} dir="rtl" placeholder="الوصف (العربية)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm col-span-2 sm:col-span-1" />
+            <input value={s.popup_cta_label || ''} onChange={(e) => patch({ popup_cta_label: e.target.value })} placeholder="Button label (e.g. Shop now)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <input value={s.popup_cta_link || ''} onChange={(e) => patch({ popup_cta_link: e.target.value })} placeholder="Button link (e.g. /shop)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <input value={s.popup_discount_code || ''} onChange={(e) => patch({ popup_discount_code: e.target.value })} placeholder="Discount code (optional)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <select value={s.popup_frequency || 'once'} onChange={(e) => patch({ popup_frequency: e.target.value })} className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm">
+              <option value="once">Show once per visitor</option>
+              <option value="every_visit">Show every visit</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-[#666] flex items-center gap-2">
+              Delay before showing
+              <input type="number" min={0} max={30} value={s.popup_delay_seconds ?? 2} onChange={(e) => patch({ popup_delay_seconds: Number(e.target.value) })} className="w-16 border border-[#ddd] px-2 py-1.5 rounded-lg text-sm" />
+              seconds
+            </label>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative w-24 aspect-video shrink-0 rounded-lg overflow-hidden bg-[#f5f1ea] flex items-center justify-center">
+              {s.popup_image ? <img src={s.popup_image} className="w-full h-full object-cover" /> : <ImageIcon size={18} className="text-[#ccc]" />}
+            </div>
+            <label className="inline-flex items-center gap-1.5 bg-[#1D1D1D] text-white text-xs px-3 py-1.5 rounded-lg cursor-pointer hover:bg-black">
+              <Upload size={12} /> {uploading === 'popup' ? 'Uploading…' : 'Popup image (optional)'}
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadPopupImage(e.target.files?.[0])} />
+            </label>
+            {s.popup_image && <button onClick={() => patch({ popup_image: '' })} className="text-[#ccc] hover:text-red-500"><Trash2 size={16} /></button>}
+          </div>
         </div>
       </div>
 
