@@ -59,6 +59,13 @@ export interface SiteSettings {
   popup_discount_code?: string | null;
   popup_delay_seconds?: number;
   popup_frequency?: 'once' | 'every_visit';
+  help_widget_enabled?: boolean;
+  help_widget_message?: string | null;
+  help_widget_message_ar?: string | null;
+  help_widget_button_label?: string | null;
+  help_widget_button_label_ar?: string | null;
+  help_widget_button_link?: string | null;
+  help_widget_allow_reply?: boolean;
 }
 
 const COLS =
@@ -68,7 +75,8 @@ const COLS =
   'studio_enabled,studio_title,studio_title_ar,studio_images,' +
   'most_loved,style_cards,inspiration_images,fresh_images,' +
   'popup_enabled,popup_title,popup_title_ar,popup_subtitle,popup_subtitle_ar,popup_image,' +
-  'popup_cta_label,popup_cta_label_ar,popup_cta_link,popup_discount_code,popup_delay_seconds,popup_frequency';
+  'popup_cta_label,popup_cta_label_ar,popup_cta_link,popup_discount_code,popup_delay_seconds,popup_frequency,' +
+  'help_widget_enabled,help_widget_message,help_widget_message_ar,help_widget_button_label,help_widget_button_label_ar,help_widget_button_link,help_widget_allow_reply';
 
 
 
@@ -142,6 +150,13 @@ export function useSiteSettings() {
           popup_discount_code: d.popup_discount_code || null,
           popup_delay_seconds: d.popup_delay_seconds ?? 2,
           popup_frequency: d.popup_frequency === 'every_visit' ? 'every_visit' : 'once',
+          help_widget_enabled: d.help_widget_enabled === true,
+          help_widget_message: d.help_widget_message || null,
+          help_widget_message_ar: d.help_widget_message_ar || null,
+          help_widget_button_label: d.help_widget_button_label || null,
+          help_widget_button_label_ar: d.help_widget_button_label_ar || null,
+          help_widget_button_link: d.help_widget_button_link || null,
+          help_widget_allow_reply: d.help_widget_allow_reply !== false,
         });
 
         setLoaded(true);
