@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { cms, uploadMedia } from './cms';
-import { Image as ImageIcon, Upload, Film, Plus, Trash2, X, Check, Megaphone, Heart, LayoutGrid, Sparkles, ArrowUp, ArrowDown, Tag } from 'lucide-react';
+import { Image as ImageIcon, Upload, Film, Plus, Trash2, X, Check, Megaphone, Heart, LayoutGrid, Sparkles, ArrowUp, ArrowDown, Tag, MessageCircle } from 'lucide-react';
 import type { SiteVideo, StyleCard } from '@/hooks/useSiteSettings';
 
 const rid = () => Math.random().toString(36).slice(2, 9);
@@ -214,6 +214,31 @@ const SettingsPanel: React.FC = () => {
             </label>
             {s.popup_image && <button onClick={() => patch({ popup_image: '' })} className="text-[#ccc] hover:text-red-500"><Trash2 size={16} /></button>}
           </div>
+        </div>
+      </div>
+
+      {/* Help bubble — floating message shown on every page, fully owner-controlled */}
+      <div className="bg-white border border-[#eee] rounded-xl p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-serif text-xl flex items-center gap-2"><MessageCircle size={18} className="text-[#6E44FF]" /> Help bubble</h3>
+          <label className="flex items-center gap-2 text-sm text-[#666] cursor-pointer">
+            <input type="checkbox" checked={s.help_widget_enabled === true} onChange={(e) => patch({ help_widget_enabled: e.target.checked })} />
+            Enabled
+          </label>
+        </div>
+        <p className="text-sm text-[#8D8D8D] mb-5">A floating bubble on every page, e.g. "Looking for a poster and can't find it? Get in touch" — with an optional button and/or a reply box. Replies show up in the Messages tab.</p>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <textarea value={s.help_widget_message || ''} onChange={(e) => patch({ help_widget_message: e.target.value })} rows={2} placeholder="Message (English)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm resize-none" />
+            <textarea value={s.help_widget_message_ar || ''} onChange={(e) => patch({ help_widget_message_ar: e.target.value })} dir="rtl" rows={2} placeholder="الرسالة (العربية)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm resize-none" />
+            <input value={s.help_widget_button_label || ''} onChange={(e) => patch({ help_widget_button_label: e.target.value })} placeholder="Button label (optional)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <input value={s.help_widget_button_label_ar || ''} onChange={(e) => patch({ help_widget_button_label_ar: e.target.value })} dir="rtl" placeholder="نص الزر (اختياري)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+            <input value={s.help_widget_button_link || ''} onChange={(e) => patch({ help_widget_button_link: e.target.value })} placeholder="Button link (e.g. /contact)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm col-span-2" />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-[#666] cursor-pointer">
+            <input type="checkbox" checked={s.help_widget_allow_reply !== false} onChange={(e) => patch({ help_widget_allow_reply: e.target.checked })} />
+            Let visitors reply directly from the bubble (shows up in Messages)
+          </label>
         </div>
       </div>
 
