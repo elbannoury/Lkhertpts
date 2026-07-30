@@ -11,15 +11,25 @@ const ShopPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [type, setType] = useState('all');
-  const [sort, setSort] = useState('new');
+  const [sort, setSort] = useState('random');
+
+  // Fisher–Yates — shuffles once per page load so the grid feels different
+  // each visit instead of always leading with whatever was added last.
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
 
   useEffect(() => {
     supabase
       .from('ecom_products')
       .select('*, variants:ecom_product_variants(*)')
       .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => { setProducts(data || []); setLoading(false); });
+      .then(({ data }) => { setProducts(shuffle(data || [])); setLoading(false); });
   }, []);
 
   const types = useMemo(
@@ -53,6 +63,8 @@ const ShopPage: React.FC = () => {
     if (sort === 'price-asc') list = [...list].sort((a, b) => (a.price || 0) - (b.price || 0));
     if (sort === 'price-desc') list = [...list].sort((a, b) => (b.price || 0) - (a.price || 0));
     if (sort === 'name') list = [...list].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    if (sort === 'new') list = [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    // sort === 'random' — keep the already-shuffled base order as-is.
     return list;
   }, [products, q, type, sort]);
 
@@ -81,6 +93,7 @@ const ShopPage: React.FC = () => {
               <button key={tp} onClick={() => setType(tp)} className={`px-4 py-2 rounded-full text-xs uppercase tracking-wide border transition-colors ${type === tp ? 'bg-[#FF6A00] text-white border-[#FF6A00]' : 'border-[#e0d8cf] dark:border-[#222] text-[#555] dark:text-[#bbb] hover:border-[#FF6A00]'}`}>{tp}</button>
             ))}
             <select value={sort} onChange={(e) => setSort(e.target.value)} className="px-3 py-2 rounded-full text-xs border border-[#e0d8cf] dark:border-[#222] bg-white dark:bg-[#121212] text-[#141414] dark:text-[#F4F1E9] outline-none focus:border-[#FF6A00]">
+              <option value="random">{lang === 'en' ? 'Shuffle' : 'عشوائي'}</option>
               <option value="new">{lang === 'en' ? 'Newest' : 'الأحدث'}</option>
               <option value="price-asc">{lang === 'en' ? 'Price ↑' : 'السعر ↑'}</option>
               <option value="price-desc">{lang === 'en' ? 'Price ↓' : 'السعر ↓'}</option>

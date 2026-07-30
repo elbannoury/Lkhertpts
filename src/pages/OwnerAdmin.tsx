@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Lock, Plus, Trash2, ToggleLeft, ToggleRight, UserPlus, LayoutDashboard, Package, FolderTree, Image, ShoppingBag, Users, Bell, ShieldCheck, Settings, MessageSquare, Check, Briefcase, Activity } from 'lucide-react';
+import { Lock, Plus, Trash2, ToggleLeft, ToggleRight, UserPlus, LayoutDashboard, Package, FolderTree, Image, ShoppingBag, Users, Bell, ShieldCheck, Settings, MessageSquare, Check, Briefcase, Activity, Mail } from 'lucide-react';
 import AnalyticsPanel from '@/components/admin/AnalyticsPanel';
 import ProductsPanel from '@/components/admin/ProductsPanel';
 import CategoriesPanel from '@/components/admin/CategoriesPanel';
@@ -11,6 +11,7 @@ import SettingsPanel from '@/components/admin/SettingsPanel';
 import ChatPanel from '@/components/admin/ChatPanel';
 import AffiliatesPanel from '@/components/admin/AffiliatesPanel';
 import ActivityPanel from '@/components/admin/ActivityPanel';
+import MessagesPanel from '@/components/admin/MessagesPanel';
 import { cms } from '@/components/admin/cms';
 
 
@@ -45,6 +46,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pendingOrders, setPendingOrders] = useState(0);
   const [unreadChat, setUnreadChat] = useState(0);
+  const [messagesUnread, setMessagesUnread] = useState(0);
   const [idForm, setIdForm] = useState({ display_name: '', color: CHAT_COLORS[0], emoji: CHAT_EMOJIS[0] });
   const [idSaved, setIdSaved] = useState(false);
 
@@ -217,6 +219,10 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
           const r = await cms('cms_orders_list', { limit: 100 });
           setPendingOrders((r?.orders || []).filter((o: any) => o.status === 'pending').length);
         }
+        if (role === 'owner') {
+          const m = await cms('cms_help_widget_list');
+          setMessagesUnread((m?.messages || []).filter((x: any) => !x.is_read).length);
+        }
         const c = await cms('chat_list');
         const total = (c?.messages || []).length;
         const seen = Number(localStorage.getItem('pts_chat_seen_count') || 0);
@@ -233,6 +239,9 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
     setTab(id);
     if (id === 'chat') {
       cms('chat_list').then((c) => localStorage.setItem('pts_chat_seen_count', String((c?.messages || []).length))).then(() => setUnreadChat(0)).catch(() => {});
+    }
+    if (id === 'messages') {
+      setMessagesUnread(0);
     }
   };
 
@@ -363,6 +372,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
     { id: 'chat', label: 'Team Chat', icon: MessageSquare, owner: false },
     { id: 'customers', label: 'Customers', icon: Users, owner: true },
     { id: 'notify', label: 'Notifications', icon: Bell, owner: true },
+    { id: 'messages', label: 'Messages', icon: Mail, owner: true },
     { id: 'settings', label: 'Settings', icon: Settings, owner: true },
     { id: 'affiliates', label: 'Affiliators', icon: Briefcase, owner: true },
     { id: 'activity', label: 'Activity Log', icon: Activity, owner: true },
@@ -387,7 +397,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
         )}
         <nav className="space-y-1">
           {tabs.map((t) => {
-            const badge = t.id === 'orders' ? pendingOrders : t.id === 'chat' ? unreadChat : 0;
+            const badge = t.id === 'orders' ? pendingOrders : t.id === 'chat' ? unreadChat : t.id === 'messages' ? messagesUnread : 0;
             return (
               <button key={t.id} onClick={() => openTab(t.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded ${tab === t.id ? 'bg-[#6E44FF] text-white' : 'text-[#aaa] hover:text-white'}`}>
                 <t.icon size={16} /> {t.label}
@@ -408,7 +418,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
       <main className="flex-1 p-6 lg:p-10 overflow-x-hidden">
         <div className="md:hidden flex gap-2 mb-6 overflow-x-auto">
           {tabs.map((t) => {
-            const badge = t.id === 'orders' ? pendingOrders : t.id === 'chat' ? unreadChat : 0;
+            const badge = t.id === 'orders' ? pendingOrders : t.id === 'chat' ? unreadChat : t.id === 'messages' ? messagesUnread : 0;
             return (
               <button key={t.id} onClick={() => openTab(t.id)} className={`relative px-4 py-2 text-xs uppercase whitespace-nowrap ${tab === t.id ? 'bg-[#1D1D1D] text-white' : 'bg-[#F2ECE6]'}`}>
                 {t.label}
@@ -426,6 +436,7 @@ const OwnerAdmin: React.FC<{ portal?: 'owner' | 'admin' }> = ({ portal = 'owner'
         {tab === 'orders' && (role === 'owner' || myPerms.includes('orders')) && <OrdersPanel />}
         {tab === 'customers' && role === 'owner' && <CustomersPanel />}
         {tab === 'settings' && role === 'owner' && <SettingsPanel />}
+        {tab === 'messages' && role === 'owner' && <MessagesPanel />}
         {tab === 'affiliates' && role === 'owner' && <AffiliatesPanel />}
         {tab === 'activity' && role === 'owner' && <ActivityPanel />}
 
