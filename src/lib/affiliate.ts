@@ -38,7 +38,7 @@ export function getRefCode(): string | null {
 
 export function clearRef() {
   try { localStorage.removeItem(KEY); } catch { /* ignore */ }
-}
+} 
 
 // Build a shareable product link that carries an affiliate code (used by the
 // admin/affiliate copy-link button). When no code is given the plain link is returned.
