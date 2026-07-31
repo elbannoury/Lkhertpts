@@ -11,6 +11,7 @@ import FeaturedDesigns from '@/components/sections/FeaturedDesigns';
 import SomePaintings from '@/components/sections/SomePaintings';
 import StudioSection from '@/components/sections/StudioSection';
 import AlwaysFresh from '@/components/sections/AlwaysFresh';
+import Partners from '@/components/sections/Partners';
 import NewsTicker from '@/components/NewsTicker';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
@@ -88,6 +89,8 @@ const AppLayout: React.FC = () => {
           {t('limited.cta')}
         </Link>
       </section>
+
+      <Partners />
     </div>
   );
 };
