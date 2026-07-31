@@ -21,6 +21,13 @@ export interface StyleCard {
   handle?: string;
 }
 
+export interface Partner {
+  name: string;
+  name_ar?: string;
+  logo: string;
+  link?: string;
+}
+
 export interface SiteSettings {
   header_logo?: string | null;
   footer_logo?: string | null;
@@ -66,6 +73,10 @@ export interface SiteSettings {
   help_widget_button_label_ar?: string | null;
   help_widget_button_link?: string | null;
   help_widget_allow_reply?: boolean;
+  partners_enabled?: boolean;
+  partners_title?: string | null;
+  partners_title_ar?: string | null;
+  partners?: Partner[];
 }
 
 const COLS =
@@ -76,7 +87,8 @@ const COLS =
   'most_loved,style_cards,inspiration_images,fresh_images,' +
   'popup_enabled,popup_title,popup_title_ar,popup_subtitle,popup_subtitle_ar,popup_image,' +
   'popup_cta_label,popup_cta_label_ar,popup_cta_link,popup_discount_code,popup_delay_seconds,popup_frequency,' +
-  'help_widget_enabled,help_widget_message,help_widget_message_ar,help_widget_button_label,help_widget_button_label_ar,help_widget_button_link,help_widget_allow_reply';
+  'help_widget_enabled,help_widget_message,help_widget_message_ar,help_widget_button_label,help_widget_button_label_ar,help_widget_button_link,help_widget_allow_reply,' +
+  'partners_enabled,partners_title,partners_title_ar,partners';
 
 
 
@@ -157,6 +169,10 @@ export function useSiteSettings() {
           help_widget_button_label_ar: d.help_widget_button_label_ar || null,
           help_widget_button_link: d.help_widget_button_link || null,
           help_widget_allow_reply: d.help_widget_allow_reply !== false,
+          partners_enabled: d.partners_enabled === true,
+          partners_title: d.partners_title || null,
+          partners_title_ar: d.partners_title_ar || null,
+          partners: Array.isArray(d.partners) ? (d.partners as Partner[]) : [],
         });
 
         setLoaded(true);
