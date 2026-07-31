@@ -67,6 +67,25 @@ const CustomPoster: React.FC = () => {
         note: form.idea || undefined,
       });
 
+      // Notify the owner (email + WhatsApp + push) — this was missing entirely
+      // before, so custom poster requests never actually reached anyone.
+      supabase.functions
+        .invoke('send-order-notifications', {
+          body: {
+            purpose: 'consultation',
+            lead: {
+              source: 'custom-poster',
+              name: form.name || undefined,
+              email: form.email,
+              phone: form.phone || undefined,
+              message: [`Type: ${form.poster_type}`, `Size: ${form.size}`, form.budget ? `Budget: ${form.budget}` : null, `Idea: ${form.idea}`]
+                .filter(Boolean)
+                .join('\n'),
+            },
+          },
+        })
+        .catch(() => {});
+
 
       setDone(true);
     } catch (err: any) {
