@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { cms, uploadMedia } from './cms';
-import { Image as ImageIcon, Upload, Film, Plus, Trash2, X, Check, Megaphone, Heart, LayoutGrid, Sparkles, ArrowUp, ArrowDown, Tag, MessageCircle } from 'lucide-react';
-import type { SiteVideo, StyleCard } from '@/hooks/useSiteSettings';
+import { Image as ImageIcon, Upload, Film, Plus, Trash2, X, Check, Megaphone, Heart, LayoutGrid, Sparkles, ArrowUp, ArrowDown, Tag, MessageCircle, Briefcase } from 'lucide-react';
+import type { SiteVideo, StyleCard, Partner } from '@/hooks/useSiteSettings';
 
 const rid = () => Math.random().toString(36).slice(2, 9);
 
@@ -22,7 +22,7 @@ const DEFAULT_NEWS_AR = 'لوحات فنية فاخرة مصنوعة يدويً�
 
 const SettingsPanel: React.FC = () => {
   // We keep the FULL settings object so saving never wipes fields we don't edit.
-  const [s, setS] = useState<any>({ videos: [], news_enabled: true, most_loved: [], style_cards: [], inspiration_images: [], fresh_images: [], promotions: [] });
+  const [s, setS] = useState<any>({ videos: [], news_enabled: true, most_loved: [], style_cards: [], inspiration_images: [], fresh_images: [], promotions: [], partners: [] });
 
   const [products, setProducts] = useState<any[]>([]);
   const [busy, setBusy] = useState(false);
@@ -42,6 +42,7 @@ const SettingsPanel: React.FC = () => {
       style_cards: Array.isArray(v.style_cards) ? v.style_cards : [],
       inspiration_images: Array.isArray(v.inspiration_images) ? v.inspiration_images : [],
       fresh_images: Array.isArray(v.fresh_images) ? v.fresh_images : [],
+      partners: Array.isArray(v.partners) ? v.partners : [],
       // Promotion cards — normalise so every entry has a stable id.
       promotions: Array.isArray(v.promotions)
         ? v.promotions.map((p: any) => ({ ...p, id: p.id || rid() }))
@@ -102,6 +103,16 @@ const SettingsPanel: React.FC = () => {
     try { const url = await uploadMedia(f, 'style'); setStyleCard(i, { image: url }); } finally { setUploading(null); }
   };
 
+  const addPartner = () => setS((prev: any) => ({ ...prev, partners: [...(prev.partners || []), { name: '', name_ar: '', logo: '', link: '' }] }));
+  const setPartner = (i: number, p: Partial<Partner>) =>
+    setS((prev: any) => ({ ...prev, partners: prev.partners.map((c: Partner, idx: number) => (idx === i ? { ...c, ...p } : c)) }));
+  const removePartner = (i: number) =>
+    setS((prev: any) => ({ ...prev, partners: prev.partners.filter((_: Partner, idx: number) => idx !== i) }));
+  const uploadPartnerLogo = async (i: number, f?: File) => {
+    if (!f) return; setUploading('partner-' + i);
+    try { const url = await uploadMedia(f, 'partners'); setPartner(i, { logo: url }); } finally { setUploading(null); }
+  };
+
   // ── Most loved products ─────────────────────────────────────────────
   const toggleLoved = (handleOrId: string) =>
     setS((prev: any) => {
@@ -135,6 +146,7 @@ const SettingsPanel: React.FC = () => {
       news_text: (s.news_text || '').trim() || null,
       news_text_ar: (s.news_text_ar || '').trim() || null,
       style_cards: (s.style_cards || []).filter((c: StyleCard) => c.image),
+      partners: (s.partners || []).filter((p: Partner) => p.logo),
       inspiration_images: (s.inspiration_images || []).filter(Boolean),
       fresh_images: (s.fresh_images || []).filter(Boolean),
       most_loved: s.most_loved || [],
@@ -332,6 +344,47 @@ const SettingsPanel: React.FC = () => {
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadStyleCard(i, e.target.files?.[0])} />
                   </label>
                   <button onClick={() => removeStyleCard(i)} className="text-[#ccc] hover:text-red-500 ml-auto"><Trash2 size={16} /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Collaborations & Partners — logo strip on the homepage */}
+      <div className="bg-white border border-[#eee] rounded-xl p-6">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-serif text-xl flex items-center gap-2"><Briefcase size={18} className="text-[#6E44FF]" /> Collaborations & Partners</h3>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-[#666] cursor-pointer">
+              <input type="checkbox" checked={s.partners_enabled === true} onChange={(e) => patch({ partners_enabled: e.target.checked })} />
+              Enabled
+            </label>
+            <button onClick={addPartner} className="bg-[#6E44FF] text-white font-medium px-3 py-2 flex items-center gap-1 text-xs rounded-lg hover:bg-[#5a37d6]"><Plus size={14} /> Add partner</button>
+          </div>
+        </div>
+        <p className="text-sm text-[#8D8D8D] mb-5">Logo strip shown on the homepage — brands, collaborators, or press mentions.</p>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          <input value={s.partners_title || ''} onChange={(e) => patch({ partners_title: e.target.value })} placeholder="Section title (English)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+          <input value={s.partners_title_ar || ''} onChange={(e) => patch({ partners_title_ar: e.target.value })} dir="rtl" placeholder="عنوان القسم (العربية)" className="border border-[#ddd] px-3 py-2.5 rounded-lg text-sm" />
+        </div>
+        <div className="space-y-3">
+          {(s.partners || []).length === 0 && <p className="text-sm text-[#bbb]">No partners added yet.</p>}
+          {(s.partners || []).map((p: Partner, i: number) => (
+            <div key={i} className="border border-[#eee] rounded-xl p-3 flex gap-3">
+              <div className="relative w-20 shrink-0 aspect-square rounded-lg overflow-hidden bg-[#f5f1ea] flex items-center justify-center">
+                {p.logo ? <img src={p.logo} className="w-full h-full object-contain p-1" /> : <ImageIcon size={18} className="text-[#ccc]" />}
+              </div>
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <input value={p.name || ''} onChange={(e) => setPartner(i, { name: e.target.value })} placeholder="Name (EN)" className="border border-[#ddd] px-2.5 py-1.5 rounded-lg text-sm" />
+                <input value={p.name_ar || ''} onChange={(e) => setPartner(i, { name_ar: e.target.value })} dir="rtl" placeholder="الاسم (AR)" className="border border-[#ddd] px-2.5 py-1.5 rounded-lg text-sm" />
+                <input value={p.link || ''} onChange={(e) => setPartner(i, { link: e.target.value })} placeholder="Link (optional)" className="border border-[#ddd] px-2.5 py-1.5 rounded-lg text-sm col-span-2" />
+                <div className="flex items-center gap-2 col-span-2">
+                  <label className="inline-flex items-center gap-1.5 bg-[#1D1D1D] text-white text-xs px-3 py-1.5 rounded-lg cursor-pointer hover:bg-black">
+                    <Upload size={12} /> {uploading === 'partner-' + i ? 'Uploading…' : 'Logo'}
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => uploadPartnerLogo(i, e.target.files?.[0])} />
+                  </label>
+                  <button onClick={() => removePartner(i)} className="text-[#ccc] hover:text-red-500 ml-auto"><Trash2 size={16} /></button>
                 </div>
               </div>
             </div>
