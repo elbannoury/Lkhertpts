@@ -78,7 +78,7 @@ const ProductCard: React.FC<Props> = ({ product }) => {
           <div className="mt-2 flex items-center justify-between">
             <p className="text-sm font-bold text-[#E04E00] dark:text-[#FF9438]">
               {variants.length ? 'من ' : ''}{formatMAD(minPrice)}
-            </p>
+            </p> 
             <span className="text-[11px] px-3 py-1 rounded-full bg-[#FF6A00]/10 border border-[#FF6A00]/40 text-[#E04E00] dark:text-[#FF9438] opacity-0 group-hover:opacity-100 transition-opacity">
               عرض اللوحة
             </span>
