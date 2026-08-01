@@ -87,7 +87,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="mt-16 pt-8 border-t border-[#222] flex flex-col sm:flex-row justify-between gap-4 text-xs text-[#777]">
-          <span>© {new Date().getFullYear()} PITSIKY — Casablanca, Morocco</span>
+          <span>© {new Date().getFullYear()} PITSIKY — Morocco</span>
           <span className="text-[#C9A23F]">Gold · Black · Inspiring</span>
         </div>
       </div>
