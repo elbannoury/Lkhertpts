@@ -60,6 +60,7 @@ const AppLayout: React.FC = () => {
       <AlwaysFresh />
       <ProductRow eyebrow={t('new.eyebrow')} title={t('new.title')} products={tagged('new')} link="/collections/new-arrivals" />
       <Inspiration />
+      <Partners />
 
 
       {/* ===== CUSTOM DESIGN BAND ===== */}
@@ -89,8 +90,6 @@ const AppLayout: React.FC = () => {
           {t('limited.cta')}
         </Link>
       </section>
-
-      <Partners />
     </div>
   );
 };
