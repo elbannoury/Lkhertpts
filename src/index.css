@@ -333,6 +333,13 @@
 .animate-news-scroll:hover { animation-play-state: paused; }
 @keyframes newsScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+/* Partners strip — two rows drifting in opposite directions */
+.animate-partners-ltr { animation: partnersLTR 32s linear infinite; }
+.animate-partners-rtl { animation: partnersRTL 32s linear infinite; }
+.animate-partners-ltr:hover, .animate-partners-rtl:hover { animation-play-state: paused; }
+@keyframes partnersLTR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@keyframes partnersRTL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
 /* ===== FEATURED DESIGNS — alternating slash + floating ===== */
 .fd-card {
   border-radius: 1.5rem; overflow: hidden; position: relative;
