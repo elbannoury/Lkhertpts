@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SEO from '@/components/SEO';
 import { crmSubscribe } from '@/lib/constants';
 
 
@@ -100,6 +101,11 @@ const CustomPoster: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0E0C] text-[#F4F1E9]" dir="rtl">
+      <SEO
+        title="تصميم لوحة مخصصة"
+        description="اطلب لوحة فنية مخصصة من بيتسيكي — صمّم لوحتك الخاصة بخامات فاخرة وتوصيل لكل مدن المغرب."
+        path="/custom"
+      />
       <Header />
       {/* hero */}
       <section className="relative mesh-bg py-24 px-6 overflow-hidden">

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Shuffle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Shell from '@/components/Shell';
+import SEO from '@/components/SEO';
 import LazyImage from '@/components/LazyImage';
 import { useI18n } from '@/contexts/I18nContext';
 import { formatMAD } from '@/data/catalog';
@@ -211,6 +212,15 @@ const CollectionsPage: React.FC = () => {
 
   return (
     <Shell>
+      <SEO
+        title={lang === 'ar' ? 'كل المجموعات' : 'Every Collection'}
+        description={
+          lang === 'ar'
+            ? 'استكشف كل مجموعات بيتسيكي من اللوحات الجدارية الفاخرة.'
+            : 'Explore every PITSIKY collection of luxury wall art, organized by theme and style.'
+        }
+        path="/collections"
+      />
       <div className="max-w-[1500px] mx-auto px-6 lg:px-10 pt-16 pb-6 text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-[#6E44FF] mb-3">PITSIKY Gallery Wall</p>
         <h1 className="font-serif text-4xl md:text-6xl text-[#1D1D1D] dark:text-[#F4F1E9]">

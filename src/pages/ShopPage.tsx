@@ -3,6 +3,7 @@ import { Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import Shell from '@/components/Shell';
 import ProductCard from '@/components/ProductCard';
+import SEO from '@/components/SEO';
 import { useI18n } from '@/contexts/I18nContext';
 
 const ShopPage: React.FC = () => {
@@ -71,6 +72,15 @@ const ShopPage: React.FC = () => {
 
   return (
     <Shell>
+      <SEO
+        title={lang === 'en' ? 'Shop All Wall Art' : 'تسوّق كل اللوحات الجدارية'}
+        description={
+          lang === 'en'
+            ? 'Browse the full PITSIKY gallery of luxury wall art, canvas prints, and framed posters delivered across Morocco.'
+            : 'تصفّح معرض بيتسيكي الكامل من اللوحات الجدارية الفاخرة والمطبوعات القماشية المؤطرة، مع التوصيل لكل مدن المغرب.'
+        }
+        path="/shop"
+      />
       <div className="max-w-[1400px] mx-auto px-6 lg:px-10 pt-14 pb-6 text-center">
         <p className="text-xs tracking-[0.3em] uppercase text-[#FF6A00] mb-3">PITSIKY · {lang === 'en' ? 'Full Gallery' : 'المعرض الكامل'}</p>
         <h1 className="font-serif text-4xl md:text-6xl text-[#1D1D1D] dark:text-[#F4F1E9]">{lang === 'en' ? 'Shop All' : 'كل المنتجات'}</h1>

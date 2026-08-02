@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import Shell from '@/components/Shell';
 import ProductCard from '@/components/ProductCard';
+import SEO from '@/components/SEO';
 
 interface Cat {
   id: string;
@@ -195,6 +196,11 @@ const CollectionPage: React.FC = () => {
 
   return (
     <Shell>
+      <SEO
+        title={category?.title || 'Collection'}
+        description={category?.description || `Shop the ${category?.title || ''} collection of luxury wall art at PITSIKY.`}
+        path={`/collections/${handle}`}
+      />
       {/* Banner — falls back to cover image / brand logo when no dedicated banner */}
       {(category?.banner_image || category?.cover_image) ? (
         <div className="relative h-[44vh] min-h-[320px] w-full overflow-hidden">

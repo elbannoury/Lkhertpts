@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Check } from 'lucide-react';
 import Shell from '@/components/Shell';
+import SEO from '@/components/SEO';
 import { useI18n } from '@/contexts/I18nContext';
 import { crmSubscribe } from '@/lib/constants';
 
@@ -34,6 +35,15 @@ const ContactPage: React.FC = () => {
 
   return (
     <Shell>
+      <SEO
+        title={en ? 'Contact Us' : 'اتصل بنا'}
+        description={
+          en
+            ? 'Get in touch with the PITSIKY team in Casablanca — WhatsApp, email, or visit our atelier.'
+            : 'تواصل مع فريق بيتسيكي في الدار البيضاء — عبر واتساب أو البريد الإلكتروني أو زيارة الأتيليه.'
+        }
+        path="/contact"
+      />
       <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-16">
         <div className="text-center mb-12">
           <p className="text-xs tracking-[0.3em] uppercase text-[#FF6A00] mb-3">{en ? 'We’d love to hear from you' : 'يسعدنا تواصلك'}</p>
@@ -52,7 +62,18 @@ const ContactPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-4 p-5 rounded-2xl bg-white dark:bg-[#121212] border border-[#eee] dark:border-[#1f1f1f]">
               <span className="w-11 h-11 rounded-full bg-[#FF6A00]/12 flex items-center justify-center"><MapPin size={19} className="text-[#FF6A00]" /></span>
-              <div><p className="font-medium text-[#1D1D1D] dark:text-[#F4F1E9]">{en ? 'Atelier' : 'الأتيليه'}</p><p className="text-sm text-[#7a7a7a]">Morocco</p></div>
+              <div><p className="font-medium text-[#1D1D1D] dark:text-[#F4F1E9]">{en ? 'Atelier' : 'الأتيليه'}</p><p className="text-sm text-[#7a7a7a]">Casablanca, Morocco</p></div>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-[#eee] dark:border-[#1f1f1f] h-56">
+              <iframe
+                title="PITSIKY Atelier — Casablanca"
+                src="https://www.google.com/maps?q=Casablanca,Morocco&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
             </div>
           </div>
 

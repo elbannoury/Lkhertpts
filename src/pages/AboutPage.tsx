@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Palette, Truck, ShieldCheck } from 'lucide-react';
 import Shell from '@/components/Shell';
+import SEO from '@/components/SEO';
 import { useI18n } from '@/contexts/I18nContext';
 
 const AboutPage: React.FC = () => {
@@ -17,6 +18,15 @@ const AboutPage: React.FC = () => {
 
   return (
     <Shell>
+      <SEO
+        title={en ? 'About Us' : 'من نحن'}
+        description={
+          en
+            ? 'Discover the story behind PITSIKY — handcrafted wall art, premium materials, and free delivery across Morocco.'
+            : 'اكتشف قصة بيتسيكي — لوحات جدارية يدوية الصنع، مواد فاخرة، وتوصيل مجاني في كل أنحاء المغرب.'
+        }
+        path="/about"
+      />
       <section className="relative mesh-bg py-28 px-6 text-center">
         <div className="absolute inset-0 bg-[#0B0B0B]/45" />
         <div className="relative z-10 max-w-3xl mx-auto">
