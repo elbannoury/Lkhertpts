@@ -6,7 +6,8 @@ import { crmSubscribe } from '@/lib/constants';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const Footer: React.FC = () => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const en = lang === 'en';
   const { settings } = useSiteSettings();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -86,9 +87,16 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-[#222] flex flex-col sm:flex-row justify-between gap-4 text-xs text-[#777]">
-          <span>© {new Date().getFullYear()} PITSIKY — Morocco</span>
-          <span className="text-[#C9A23F]">Gold · Black · Inspiring</span>
+        <div className="mt-16 pt-8 border-t border-[#222] flex flex-col gap-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs">
+            <Link to="/privacy-policy" className={link}>{en ? 'Privacy Policy' : 'سياسة الخصوصية'}</Link>
+            <Link to="/terms-of-service" className={link}>{en ? 'Terms of Service' : 'شروط الاستخدام'}</Link>
+            <Link to="/refund-policy" className={link}>{en ? 'Refund & Return Policy' : 'سياسة الإرجاع والاستبدال'}</Link>
+          </div>
+          <div className="flex flex-col sm:flex-row justify-between gap-4 text-xs text-[#777]">
+            <span>© {new Date().getFullYear()} PITSIKY — Casablanca, Morocco</span>
+            <span className="text-[#C9A23F]">Gold · Black · Inspiring</span>
+          </div>
         </div>
       </div>
     </footer>
