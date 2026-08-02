@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/contexts/I18nContext";
 import { CartProvider } from "@/contexts/CartContext";
@@ -24,6 +25,9 @@ import ShopPage from "./pages/ShopPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
+import RefundPolicyPage from "./pages/RefundPolicyPage";
 
 
 const queryClient = new QueryClient();
@@ -40,43 +44,47 @@ const InspirationPage = () => (
 captureRefFromUrl();
 
 const App = () => (
-  <ThemeProvider defaultTheme="light">
-    <I18nProvider>
-      <CartProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/shop" element={<ShopPage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/inspiration" element={<InspirationPage />} />
-                <Route path="/collections" element={<CollectionsPage />} />
-                <Route path="/collections/:handle" element={<CollectionPage />} />
-                <Route path="/rooms/:name" element={<RoomPage />} />
-                <Route path="/products/:handle" element={<ProductPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/order-confirmed/:id" element={<OrderConfirmed />} />
-                <Route path="/adminsofpitsiky" element={<OwnerAdmin portal="admin" />} />
-                <Route path="/theownerofpts1" element={<OwnerAdmin portal="owner" />} />
+  <HelmetProvider>
+    <ThemeProvider defaultTheme="light">
+      <I18nProvider>
+        <CartProvider>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/shop" element={<ShopPage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/inspiration" element={<InspirationPage />} />
+                  <Route path="/collections" element={<CollectionsPage />} />
+                  <Route path="/collections/:handle" element={<CollectionPage />} />
+                  <Route path="/rooms/:name" element={<RoomPage />} />
+                  <Route path="/products/:handle" element={<ProductPage />} />
+                  <Route path="/checkout" element={<CheckoutPage />} />
+                  <Route path="/order-confirmed/:id" element={<OrderConfirmed />} />
+                  <Route path="/adminsofpitsiky" element={<OwnerAdmin portal="admin" />} />
+                  <Route path="/theownerofpts1" element={<OwnerAdmin portal="owner" />} />
 
+                  <Route path="/track" element={<OrderTracking />} />
+                  <Route path="/custom" element={<CustomPoster />} />
+                  <Route path="/custom-poster" element={<CustomPoster />} />
+                  <Route path="/aff" element={<AffiliateDashboard />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                  <Route path="/terms-of-service" element={<TermsPage />} />
+                  <Route path="/refund-policy" element={<RefundPolicyPage />} />
 
-                <Route path="/track" element={<OrderTracking />} />
-                <Route path="/custom" element={<CustomPoster />} />
-                <Route path="/custom-poster" element={<CustomPoster />} />
-                <Route path="/aff" element={<AffiliateDashboard />} />
-
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </CartProvider>
-    </I18nProvider>
-  </ThemeProvider>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </QueryClientProvider>
+        </CartProvider>
+      </I18nProvider>
+    </ThemeProvider>
+  </HelmetProvider>
 );
 
 export default App;
