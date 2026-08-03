@@ -32,9 +32,9 @@ const TermsPage: React.FC = () => {
             <h2 className="font-serif text-xl text-[#1D1D1D] dark:text-[#F4F1E9]">Orders & Payment</h2>
             <p>
               All prices are listed in Moroccan Dirhams (MAD) and include applicable taxes. We
-              accept Cash on Delivery, as well as Visa/Mastercard and CMI payments. Orders are
-              confirmed once payment is received or, for Cash on Delivery, once you confirm your
-              delivery details.
+              require a 50% deposit to confirm your order, with the remaining 50% paid on
+              delivery. We also accept full payment upfront via Visa/Mastercard and CMI. Orders
+              are confirmed once the deposit is received.
             </p>
             <h2 className="font-serif text-xl text-[#1D1D1D] dark:text-[#F4F1E9]">Shipping</h2>
             <p>
@@ -60,9 +60,9 @@ const TermsPage: React.FC = () => {
             </p>
             <h2 className="font-serif text-xl text-[#1D1D1D] dark:text-[#F4F1E9]">الطلبات والدفع</h2>
             <p>
-              جميع الأسعار معروضة بالدرهم المغربي (MAD) وتشمل الضرائب المطبّقة. نقبل الدفع عند
-              الاستلام، بالإضافة إلى الدفع عبر Visa/Mastercard و CMI. يتم تأكيد الطلب فور استلام
-              الدفع، أو عند تأكيد بيانات التوصيل بالنسبة للدفع عند الاستلام.
+              جميع الأسعار معروضة بالدرهم المغربي (MAD) وتشمل الضرائب المطبّقة. نطلب دفع 50% كعربون
+              لتأكيد الطلب، على أن يُدفع الباقي 50% عند الاستلام. كما نقبل الدفع الكامل مسبقاً عبر
+              Visa/Mastercard و CMI. يتم تأكيد الطلب فور استلام العربون.
             </p>
             <h2 className="font-serif text-xl text-[#1D1D1D] dark:text-[#F4F1E9]">التوصيل</h2>
             <p>نوصّل إلى جميع مدن المغرب. مدة التوصيل الاعتيادية من 3 إلى 5 أيام عمل بعد تأكيد الطلب.</p>
