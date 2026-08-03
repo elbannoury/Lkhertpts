@@ -26,23 +26,36 @@ const CheckoutPage: React.FC = () => {
     setSubmitting(true); setError('');
 
     try {
-      const { data: existingCustomer } = await supabase
+      const { data: existingCustomer, error: existErr } = await supabase
         .from('ecom_customers')
         .select('tags')
         .eq('email', form.email || `${form.phone}@pitsiky.order`)
         .maybeSingle();
+      if (existErr) throw new Error(`Customer lookup failed: ${existErr.message}`);
+
       const tags = Array.from(new Set([...(existingCustomer?.tags || []), 'customer']));
 
-      const { data: customer } = await supabase
+      const { data: customer, error: customerErr } = await supabase
         .from('ecom_customers')
         .upsert({ email: form.email || `${form.phone}@pitsiky.order`, name: form.name, phone: form.phone, sms_opt_in: sms, tags }, { onConflict: 'email' })
-        .select('id').single();
+        .select('id')
+        .single();
+
+      // إذا فشل حفظ العميل (مثلاً بسبب سياسة RLS تمنع الكتابة العامة)،
+      // نوقف العملية هنا برسالة واضحة بدل المتابعة بـ customer_id فارغ
+      // الذي كان يتسبب في فشل صامت لاحقاً عند إنشاء الطلب.
+      // If saving the customer fails (e.g. an RLS policy blocking public
+      // writes), stop here with a clear message instead of continuing with
+      // an empty customer_id — which was silently breaking order creation.
+      if (customerErr || !customer) {
+        throw new Error(`Customer save failed: ${customerErr?.message || 'no customer id returned'}`);
+      }
 
       const refCode = getRefCode();
-      const { data: order } = await supabase
+      const { data: order, error: orderErr } = await supabase
         .from('ecom_orders')
         .insert({
-          customer_id: customer?.id,
+          customer_id: customer.id,
           status: 'pending',
           subtotal,
           tax: 0,
@@ -53,9 +66,16 @@ const CheckoutPage: React.FC = () => {
           shipping_address: { name: form.name, phone: form.phone, city: form.city, address: form.address, ref_code: refCode || null },
           notes: form.notes,
         })
-        .select('id, order_number').single();
+        .select('id, order_number')
+        .single();
 
-      if (!order) throw new Error('Could not create order');
+      // نعرض رسالة الخطأ الفعلية القادمة من Supabase (مثال: انتهاك سياسة RLS،
+      // أو عمود إجباري ناقص) بدل رسالة عامة لا تفيد في التشخيص.
+      // Surface the real Supabase error (e.g. an RLS violation or a missing
+      // required column) instead of a generic message that can't be debugged.
+      if (orderErr || !order) {
+        throw new Error(orderErr?.message || 'Could not create order — no order id returned.');
+      }
 
       const orderItems = cart.map((i) => ({
         order_id: order.id,
@@ -68,7 +88,15 @@ const CheckoutPage: React.FC = () => {
         unit_price: i.price,
         total: i.price * i.quantity,
       }));
-      await supabase.from('ecom_order_items').insert(orderItems);
+      const { error: itemsErr } = await supabase.from('ecom_order_items').insert(orderItems);
+      if (itemsErr) {
+        // الطلب نفسه أُنشئ بنجاح؛ لا نمنع المستخدم من إتمام الشراء إذا فشلت
+        // فقط سطور المنتجات — لكن نسجّل الخطأ ليتم تداركه من لوحة التحكم.
+        // The order itself was created successfully; don't block the
+        // customer if only the line items failed — but log it so it can be
+        // fixed from the admin console.
+        console.error('CheckoutPage: order created but order items failed to save', itemsErr);
+      }
 
       // Distribute to configured channels (email + WhatsApp)
       supabase.functions.invoke('send-order-notifications', {
@@ -99,6 +127,7 @@ const CheckoutPage: React.FC = () => {
       navigate(`/order-confirmed/${order.order_number}`);
 
     } catch (err: any) {
+      console.error('CheckoutPage: order submission failed', err);
       setError(err.message || 'Something went wrong. Please try again.');
       setSubmitting(false);
     }
