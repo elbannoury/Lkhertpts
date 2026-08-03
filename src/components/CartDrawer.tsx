@@ -53,7 +53,7 @@ const CartDrawer: React.FC = () => {
                 <span className="text-[#8D8D8D]">Subtotal</span>
                 <span className="font-medium">{formatMAD(subtotal)}</span>
               </div>
-              <p className="text-xs text-[#8D8D8D] mb-4">Free delivery across Morocco · pay 50% and complete when you recieve it </p>
+              <p className="text-xs text-[#8D8D8D] mb-4">Free delivery across Morocco · 50% deposit, 50% on delivery</p>
               <button
                 onClick={() => { setOpen(false); navigate('/checkout'); }}
                 className="w-full bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase hover:bg-[#6E44FF] transition-colors"
