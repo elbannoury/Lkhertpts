@@ -1,10 +1,13 @@
 import React from 'react';
 import { Helmet } from 'react-helmet-async';
+import { useI18n } from '@/contexts/I18nContext';
 
 const SITE_URL = 'https://www.pitsiky.com';
 const DEFAULT_IMAGE = `${SITE_URL}/og.jpg`;
+// العربية هي اللغة الرئيسية للموقع، لذا الوصف الافتراضي عربي أولاً
+// Arabic is the site's primary language, so the default description is Arabic
 const DEFAULT_DESCRIPTION =
-  'PITSIKY transforms empty walls into stunning art with an elegant and luxurious digital experience, focused on wall art and decoration.';
+  'بيتسيكي تحوّل الجدران الفارغة إلى فن يلهم حياتك اليومية، بتجربة رقمية أنيقة وفاخرة متخصصة في اللوحات الجدارية والديكور.';
 
 interface SEOProps {
   /** عنوان الصفحة (بدون اسم الموقع، سيُضاف تلقائياً) */
@@ -21,14 +24,15 @@ interface SEOProps {
 
 /**
  * مكوّن SEO موحّد يُستخدم في كل صفحة لضبط:
+ * - <html lang dir> حسب اللغة الحالية (العربية افتراضياً)
  * - <title> و <meta name="description">
- * - <link rel="canonical">
+ * - <link rel="canonical"> و hreflang لكل من العربية/الإنجليزية
  * - Open Graph / Twitter tags
  * - JSON-LD structured data (اختياري)
  *
- * A single reusable SEO component used on every page to set the title,
- * description, canonical link, Open Graph/Twitter tags, and optional
- * JSON-LD structured data.
+ * A single reusable SEO component used on every page to set the document's
+ * lang/dir (Arabic by default), the title, description, canonical link,
+ * hreflang alternates, Open Graph/Twitter tags, and optional JSON-LD.
  */
 const SEO: React.FC<SEOProps> = ({
   title,
@@ -39,15 +43,21 @@ const SEO: React.FC<SEOProps> = ({
   jsonLd,
   noindex = false,
 }) => {
-  const fullTitle = title.includes('PITSIKY') ? title : `${title} | PITSIKY Art Gallery`;
+  const { lang } = useI18n();
+  const fullTitle = title.includes('PITSIKY') ? title : `${title} | PITSIKY`;
   const canonical = `${SITE_URL}${path}`;
   const jsonLdArray = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (
-    <Helmet>
+    <Helmet htmlAttributes={{ lang, dir: lang === 'ar' ? 'rtl' : 'ltr' }}>
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={canonical} />
+      {/* الموقع ثنائي اللغة على نفس الرابط (تبديل عبر زر اللغة، وليس روابط
+          منفصلة لكل لغة)، لذا نصرّح لجوجل أن هذا الرابط يخدم الجمهورين معاً. */}
+      <link rel="alternate" hrefLang="ar" href={canonical} />
+      <link rel="alternate" hrefLang="en" href={canonical} />
+      <link rel="alternate" hrefLang="x-default" href={canonical} />
       {noindex && <meta name="robots" content="noindex, nofollow" />}
 
       <meta property="og:title" content={fullTitle} />
@@ -55,6 +65,7 @@ const SEO: React.FC<SEOProps> = ({
       <meta property="og:type" content={type} />
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={image} />
+      <meta property="og:locale" content={lang === 'ar' ? 'ar_MA' : 'en_US'} />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
