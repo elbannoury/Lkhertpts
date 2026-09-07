@@ -2,28 +2,31 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { X, Minus, Plus, Trash2 } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { formatMAD } from '@/data/catalog';
 
 const CartDrawer: React.FC = () => {
   const { cart, open, setOpen, updateQty, removeFromCart, subtotal } = useCart();
   const navigate = useNavigate();
+  const { lang } = useI18n();
+  const en = lang === 'en';
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-      <div className="absolute right-0 top-0 h-full w-full max-w-md bg-[#FAF8F5] flex flex-col shadow-2xl">
+      <div className={`absolute top-0 h-full w-full max-w-md bg-[#FAF8F5] flex flex-col shadow-2xl ${en ? 'right-0' : 'left-0'}`}>
         <div className="flex items-center justify-between p-6 border-b border-[#E7DFD6]">
-          <h2 className="font-serif text-xl tracking-wide">Your Selection</h2>
+          <h2 className="font-serif text-xl tracking-wide">{en ? 'Your Selection' : 'سلتك'}</h2>
           <button onClick={() => setOpen(false)}><X size={22} /></button>
         </div>
 
         {cart.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-            <p className="text-[#8D8D8D] mb-6">Your gallery wall awaits.</p>
+            <p className="text-[#8D8D8D] mb-6">{en ? 'Your gallery wall awaits.' : 'جدارك الفني في انتظارك.'}</p>
             <button onClick={() => setOpen(false)} className="text-xs tracking-[0.2em] uppercase border-b border-[#6E44FF] pb-1">
-              Explore Collections
+              {en ? 'Explore Collections' : 'اكتشف المجموعات'}
             </button>
           </div>
         ) : (
@@ -50,15 +53,17 @@ const CartDrawer: React.FC = () => {
             </div>
             <div className="p-6 border-t border-[#E7DFD6]">
               <div className="flex justify-between mb-1 text-sm">
-                <span className="text-[#8D8D8D]">Subtotal</span>
+                <span className="text-[#8D8D8D]">{en ? 'Subtotal' : 'المجموع الفرعي'}</span>
                 <span className="font-medium">{formatMAD(subtotal)}</span>
               </div>
-              <p className="text-xs text-[#8D8D8D] mb-4">Free delivery across Morocco · 50% deposit, 50% on delivery</p>
+              <p className="text-xs text-[#8D8D8D] mb-4">
+                {en ? 'Free delivery across Morocco · 50% deposit, 50% on delivery' : 'توصيل مجاني لكل مدن المغرب · 50% مقدماً و50% عند الاستلام'}
+              </p>
               <button
                 onClick={() => { setOpen(false); navigate('/checkout'); }}
                 className="w-full bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase hover:bg-[#6E44FF] transition-colors"
               >
-                Place Your Order
+                {en ? 'Place Your Order' : 'أتمم طلبك'}
               </button>
             </div>
           </>
