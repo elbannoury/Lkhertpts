@@ -2,16 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import Shell from '@/components/Shell';
+import SEO from '@/components/SEO';
 import { useCart } from '@/contexts/CartContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { formatMAD } from '@/data/catalog';
 import { getRefCode, clearRef } from '@/lib/affiliate';
 
 
 const MOROCCAN_CITIES = ['Casablanca', 'Rabat', 'Marrakech', 'Fès', 'Tanger', 'Agadir', 'Meknès', 'Oujda', 'Kénitra', 'Tétouan', 'Other'];
+const CITY_LABELS_AR: Record<string, string> = {
+  Casablanca: 'الدار البيضاء', Rabat: 'الرباط', Marrakech: 'مراكش', 'Fès': 'فاس',
+  Tanger: 'طنجة', Agadir: 'أكادير', 'Meknès': 'مكناس', Oujda: 'وجدة',
+  'Kénitra': 'القنيطرة', 'Tétouan': 'تطوان', Other: 'مدينة أخرى',
+};
 
 const CheckoutPage: React.FC = () => {
   const { cart, subtotal, clearCart } = useCart();
   const navigate = useNavigate();
+  const { lang } = useI18n();
+  const en = lang === 'en';
   const [form, setForm] = useState({ name: '', phone: '', email: '', city: 'Casablanca', address: '', notes: '' });
   const [sms, setSms] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -21,8 +30,14 @@ const CheckoutPage: React.FC = () => {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.city) { setError('Please complete name, phone and city.'); return; }
-    if (cart.length === 0) { setError('Your selection is empty.'); return; }
+    if (!form.name || !form.phone || !form.city) {
+      setError(en ? 'Please complete name, phone and city.' : 'يرجى إكمال الاسم والهاتف والمدينة.');
+      return;
+    }
+    if (cart.length === 0) {
+      setError(en ? 'Your selection is empty.' : 'سلتك فارغة.');
+      return;
+    }
     setSubmitting(true); setError('');
 
     try {
@@ -128,39 +143,52 @@ const CheckoutPage: React.FC = () => {
 
     } catch (err: any) {
       console.error('CheckoutPage: order submission failed', err);
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || (en ? 'Something went wrong. Please try again.' : 'حدث خطأ ما. يرجى المحاولة مرة أخرى.'));
       setSubmitting(false);
     }
   };
 
   return (
     <Shell>
+      <SEO
+        title={en ? 'Checkout' : 'إتمام الطلب'}
+        path="/checkout"
+        noindex
+      />
       <div className="max-w-[1100px] mx-auto px-6 lg:px-10 py-16">
-        <h1 className="font-serif text-4xl md:text-5xl mb-3">Place Your Order</h1>
-        <p className="text-[#8D8D8D] mb-12">We'll contact you by phone to confirm payment and delivery details.</p>
+        <h1 className="font-serif text-4xl md:text-5xl mb-3">{en ? 'Place Your Order' : 'أتمم طلبك'}</h1>
+        <p className="text-[#8D8D8D] mb-12">
+          {en
+            ? "We'll contact you by phone to confirm payment and delivery details."
+            : 'سنتواصل معك هاتفياً لتأكيد تفاصيل الدفع والتوصيل.'}
+        </p>
 
         <div className="grid md:grid-cols-[1fr_380px] gap-12">
           <form onSubmit={submit} className="space-y-5">
-            <input className="w-full border border-[#ddd] bg-white px-4 py-3" placeholder="Full name *" value={form.name} onChange={(e) => set('name', e.target.value)} />
-            <input className="w-full border border-[#ddd] bg-white px-4 py-3" type="tel" placeholder="Phone number *" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
-            <input className="w-full border border-[#ddd] bg-white px-4 py-3" type="email" placeholder="Email (optional)" value={form.email} onChange={(e) => set('email', e.target.value)} />
+            <input className="w-full border border-[#ddd] bg-white px-4 py-3" placeholder={en ? 'Full name *' : 'الاسم الكامل *'} value={form.name} onChange={(e) => set('name', e.target.value)} />
+            <input className="w-full border border-[#ddd] bg-white px-4 py-3" type="tel" placeholder={en ? 'Phone number *' : 'رقم الهاتف *'} value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+            <input className="w-full border border-[#ddd] bg-white px-4 py-3" type="email" placeholder={en ? 'Email (optional)' : 'البريد الإلكتروني (اختياري)'} value={form.email} onChange={(e) => set('email', e.target.value)} />
             <select className="w-full border border-[#ddd] bg-white px-4 py-3" value={form.city} onChange={(e) => set('city', e.target.value)}>
-              {MOROCCAN_CITIES.map((c) => <option key={c}>{c}</option>)}
+              {MOROCCAN_CITIES.map((c) => <option key={c} value={c}>{en ? c : CITY_LABELS_AR[c]}</option>)}
             </select>
-            <input className="w-full border border-[#ddd] bg-white px-4 py-3" placeholder="Delivery address" value={form.address} onChange={(e) => set('address', e.target.value)} />
-            <textarea className="w-full border border-[#ddd] bg-white px-4 py-3 min-h-24" placeholder="Notes (optional)" value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+            <input className="w-full border border-[#ddd] bg-white px-4 py-3" placeholder={en ? 'Delivery address' : 'عنوان التوصيل'} value={form.address} onChange={(e) => set('address', e.target.value)} />
+            <textarea className="w-full border border-[#ddd] bg-white px-4 py-3 min-h-24" placeholder={en ? 'Notes (optional)' : 'ملاحظات (اختياري)'} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
             <label className="flex items-start gap-2 text-xs text-[#8D8D8D]">
               <input type="checkbox" checked={sms} onChange={(e) => setSms(e.target.checked)} className="mt-0.5" />
-              <span>Text me order updates. Msg &amp; data rates may apply. Reply STOP to unsubscribe.</span>
+              <span>
+                {en
+                  ? 'Text me order updates. Msg & data rates may apply. Reply STOP to unsubscribe.'
+                  : 'أرسل لي تحديثات الطلب عبر الرسائل النصية. قد تُطبَّق رسوم الرسائل والبيانات. أرسل STOP لإلغاء الاشتراك.'}
+              </span>
             </label>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <button disabled={submitting} className="w-full bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase hover:bg-[#6E44FF] transition-colors disabled:opacity-50">
-              {submitting ? 'Placing order…' : 'Confirm Order'}
+              {submitting ? (en ? 'Placing order…' : 'جارٍ تأكيد الطلب…') : (en ? 'Confirm Order' : 'تأكيد الطلب')}
             </button>
           </form>
 
           <div className="bg-[#F2ECE6] p-6 h-fit">
-            <h3 className="font-serif text-xl mb-5">Your Selection</h3>
+            <h3 className="font-serif text-xl mb-5">{en ? 'Your Selection' : 'مشترياتك'}</h3>
             <div className="space-y-4 mb-5">
               {cart.map((i) => (
                 <div key={i.product_id + (i.variant_id || '')} className="flex gap-3">
@@ -168,16 +196,16 @@ const CheckoutPage: React.FC = () => {
                   <div className="flex-1 text-sm">
                     <p className="font-medium leading-tight">{i.name}</p>
                     {i.variant_title && <p className="text-xs text-[#8D8D8D]">{i.variant_title}</p>}
-                    <p className="text-xs text-[#8D8D8D]">Qty {i.quantity}</p>
+                    <p className="text-xs text-[#8D8D8D]">{en ? `Qty ${i.quantity}` : `الكمية: ${i.quantity}`}</p>
                   </div>
                   <span className="text-sm">{formatMAD(i.price * i.quantity)}</span>
                 </div>
               ))}
             </div>
             <div className="border-t border-[#ddd] pt-4 flex justify-between text-sm">
-              <span>Total</span><span className="font-serif text-lg">{formatMAD(subtotal)}</span>
+              <span>{en ? 'Total' : 'المجموع'}</span><span className="font-serif text-lg">{formatMAD(subtotal)}</span>
             </div>
-            <p className="text-xs text-[#8D8D8D] mt-3">Free delivery</p>
+            <p className="text-xs text-[#8D8D8D] mt-3">{en ? 'Free delivery' : 'توصيل مجاني'}</p>
           </div>
         </div>
       </div>
