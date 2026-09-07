@@ -61,7 +61,7 @@ interface I18nCtx {
 }
 
 const Ctx = createContext<I18nCtx>({
-  lang: 'en', dir: 'ltr', toggleLang: () => {}, setLang: () => {}, t: (k) => k,
+  lang: 'ar', dir: 'rtl', toggleLang: () => {}, setLang: () => {}, t: (k) => k,
 });
 
 export const useI18n = () => useContext(Ctx);
@@ -72,7 +72,9 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const s = localStorage.getItem('pts_lang');
       if (s === 'ar' || s === 'en') return s;
     }
-    return 'en';
+    // بيتسيكي موقع مغربي، والعربية هي اللغة الرئيسية بشكل افتراضي —
+    // PITSIKY is a Moroccan site; Arabic is the primary default language.
+    return 'ar';
   });
 
   useEffect(() => {
