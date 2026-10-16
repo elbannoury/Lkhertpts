@@ -36,6 +36,4 @@ export const INSPIRATION_IMAGES = [
 ];
 
 export const formatMAD = (cents: number) =>
-  new Intl.NumberFormat('fr-MA', { style: 'currency', currency: 'MAD', maximumFractionDigits: 0 }).format(
-    cents / 100,
-  );
+  `${new Intl.NumberFormat('fr-MA', { maximumFractionDigits: 0 }).format(cents / 100)} DH`;
