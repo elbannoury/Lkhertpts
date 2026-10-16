@@ -13,11 +13,16 @@ import StudioSection from '@/components/sections/StudioSection';
 import AlwaysFresh from '@/components/sections/AlwaysFresh';
 import Partners from '@/components/sections/Partners';
 import NewsTicker from '@/components/NewsTicker';
+import TrustStrip from '@/components/TrustStrip';
+import BrandIntro from '@/components/BrandIntro';
+import FAQSection from '@/components/FAQSection';
+import { FAQ_ITEMS, resolveFaq } from '@/lib/seoShared';
 import { useI18n } from '@/contexts/I18nContext';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const AppLayout: React.FC = () => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const en = lang === 'en';
   const { settings } = useSiteSettings();
   const [products, setProducts] = useState<any[]>([]);
 
@@ -48,6 +53,7 @@ const AppLayout: React.FC = () => {
     <div>
       <Hero />
       <NewsTicker />
+      <TrustStrip />
 
       <FeaturedDesigns />
       <SomePaintings products={lovedProducts} />
@@ -61,6 +67,13 @@ const AppLayout: React.FC = () => {
       <ProductRow eyebrow={t('new.eyebrow')} title={t('new.title')} products={tagged('new')} link="/collections/new-arrivals" />
       <Inspiration />
       <Partners />
+
+      <BrandIntro />
+      <FAQSection
+        eyebrow={en ? 'Questions & answers' : 'أسئلة وأجوبة'}
+        title={en ? 'Frequently asked questions' : 'الأسئلة الشائعة'}
+        items={resolveFaq(FAQ_ITEMS, en ? 'en' : 'ar')}
+      />
 
 
       {/* ===== CUSTOM DESIGN BAND ===== */}

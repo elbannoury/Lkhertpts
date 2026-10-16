@@ -13,6 +13,8 @@ interface Review {
 
 interface ProductReviewsProps {
   productId: string;
+  /** Reports the REAL average + count so the product page can emit aggregateRating JSON-LD. */
+  onStats?: (avg: number, count: number) => void;
 }
 
 /**
@@ -25,7 +27,7 @@ interface ProductReviewsProps {
  * migration). If the table doesn't exist yet, the section quietly hides
  * itself instead of breaking the page.
  */
-const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
+const ProductReviews: React.FC<ProductReviewsProps> = ({ productId, onStats }) => {
   const { lang } = useI18n();
   const en = lang === 'en';
 
@@ -52,7 +54,9 @@ const ProductReviews: React.FC<ProductReviewsProps> = ({ productId }) => {
       setTableMissing(true);
       return;
     }
-    setReviews((data as any) || []);
+    const rows = ((data as any) || []) as Review[];
+    setReviews(rows);
+    if (onStats) onStats(rows.length ? rows.reduce((t, r) => t + r.rating, 0) / rows.length : 0, rows.length);
   };
 
   useEffect(() => {
