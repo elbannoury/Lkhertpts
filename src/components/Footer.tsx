@@ -40,7 +40,7 @@ const Footer: React.FC = () => {
             {settings.footer_logo ? (
               <img src={settings.footer_logo} alt="PITSIKY" className="h-12 w-auto object-contain" />
             ) : (
-              <span className="font-serif text-2xl tracking-[0.25em] text-white">PITS<span className="text-[#C9A23F]">IKY</span></span>
+              <span className="keep-tracking font-serif text-2xl tracking-[0.25em] text-white">PITS<span className="text-[#C9A23F]">IKY</span></span>
             )}
             <p className="mt-5 text-sm leading-relaxed text-[#9a9a9a] max-w-xs">{t('footer.tagline')}</p>
           </div>

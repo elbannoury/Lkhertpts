@@ -36,7 +36,7 @@ const Header: React.FC = () => {
     settings.header_logo ? (
       <img src={settings.header_logo} alt="PITSIKY" className={`${small ? 'h-7' : 'h-10'} w-auto object-contain`} />
     ) : (
-      <span className={`font-serif ${small ? 'text-xl' : 'text-[26px]'} tracking-[0.32em] text-[#0B0B0B] dark:text-[#F4F1E9]`}>
+      <span className={`keep-tracking font-serif ${small ? 'text-xl' : 'text-[26px]'} tracking-[0.32em] text-[#0B0B0B] dark:text-[#F4F1E9]`}>
         PITS<span className="text-[#FF6A00]">IKY</span>
       </span>
     );
@@ -44,7 +44,7 @@ const Header: React.FC = () => {
   const LangPill = () => (
     <button
       onClick={toggleLang}
-      className="group relative inline-flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 rounded-full border border-[#FF6A00]/30 bg-[#FF6A00]/5 hover:bg-[#FF6A00] hover:border-[#FF6A00] transition-all"
+      className="group relative inline-flex items-center gap-1.5 ps-2.5 pe-3 py-1.5 rounded-full border border-[#FF6A00]/30 bg-[#FF6A00]/5 hover:bg-[#FF6A00] hover:border-[#FF6A00] transition-all"
       aria-label="Switch language"
     >
       <Globe size={15} className="text-[#FF6A00] group-hover:text-white transition-colors" />
@@ -69,7 +69,7 @@ const Header: React.FC = () => {
               <Menu size={22} />
             </button>
 
-            <Link to="/" className="flex-1 lg:flex-none text-center lg:text-left flex items-center justify-center lg:justify-start">
+            <Link to="/" className="flex-1 lg:flex-none text-center lg:text-start flex items-center justify-center lg:justify-start">
               <Logo small={scrolled} />
             </Link>
 
@@ -78,7 +78,7 @@ const Header: React.FC = () => {
                 <Link
                   key={c.title}
                   to={c.to}
-                  className="relative text-[12.5px] tracking-[0.08em] uppercase text-[#4a4a4a] dark:text-[#bdb9ad] hover:text-[#FF6A00] dark:hover:text-[#FF9438] transition-colors after:absolute after:left-0 after:-bottom-1.5 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#FF6A00] after:transition-all after:duration-300"
+                  className="relative text-[12.5px] tracking-[0.08em] uppercase text-[#4a4a4a] dark:text-[#bdb9ad] hover:text-[#FF6A00] dark:hover:text-[#FF9438] transition-colors after:absolute after:start-0 after:-bottom-1.5 after:h-[2px] after:w-0 hover:after:w-full after:bg-[#FF6A00] after:transition-all after:duration-300"
                 >
                   {c.title}
                 </Link>
@@ -100,7 +100,7 @@ const Header: React.FC = () => {
               <button onClick={() => setOpen(true)} className={`relative ${IconBtn}`} aria-label="Cart">
                 <ShoppingBag size={20} />
                 {count > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-[#FF6A00] text-white text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
+                  <span className="absolute -top-2 -end-2 bg-[#FF6A00] text-white text-[10px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
                     {count}
                   </span>
                 )}
@@ -113,12 +113,12 @@ const Header: React.FC = () => {
       {menu && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMenu(false)} />
-          <div className="absolute left-0 top-0 h-full w-72 bg-[#FAF7F2] dark:bg-[#0B0B0B] p-6 shadow-2xl">
+          <div className="absolute start-0 top-0 h-full w-72 bg-[#FAF7F2] dark:bg-[#0B0B0B] p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-8">
               {settings.header_logo ? (
                 <img src={settings.header_logo} alt="PITSIKY" className="h-8 w-auto object-contain" />
               ) : (
-                <span className="font-serif text-xl tracking-[0.28em] text-[#0B0B0B] dark:text-[#F4F1E9]">
+                <span className="keep-tracking font-serif text-xl tracking-[0.28em] text-[#0B0B0B] dark:text-[#F4F1E9]">
                   PITS<span className="text-[#FF6A00]">IKY</span>
                 </span>
               )}
