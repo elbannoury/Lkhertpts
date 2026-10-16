@@ -25,6 +25,7 @@ import ShopPage from "./pages/ShopPage";
 import AboutPage from "./pages/AboutPage";
 import ContactPage from "./pages/ContactPage";
 import AffiliateDashboard from "./pages/AffiliateDashboard";
+import NoIndex from "@/components/NoIndex";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsPage from "./pages/TermsPage";
 import RefundPolicyPage from "./pages/RefundPolicyPage";
@@ -65,18 +66,18 @@ const App = () => (
                   <Route path="/products/:handle" element={<ProductPage />} />
                   <Route path="/checkout" element={<CheckoutPage />} />
                   <Route path="/order-confirmed/:id" element={<OrderConfirmed />} />
-                  <Route path="/adminsofpitsiky" element={<OwnerAdmin portal="admin" />} />
-                  <Route path="/theownerofpts1" element={<OwnerAdmin portal="owner" />} />
+                  <Route path="/adminsofpitsiky" element={<><NoIndex /><OwnerAdmin portal="admin" /></>} />
+                  <Route path="/theownerofpts1" element={<><NoIndex /><OwnerAdmin portal="owner" /></>} />
 
-                  <Route path="/track" element={<OrderTracking />} />
+                  <Route path="/track" element={<><NoIndex /><OrderTracking /></>} />
                   <Route path="/custom" element={<CustomPoster />} />
                   <Route path="/custom-poster" element={<CustomPoster />} />
-                  <Route path="/aff" element={<AffiliateDashboard />} />
+                  <Route path="/aff" element={<><NoIndex /><AffiliateDashboard /></>} />
                   <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms-of-service" element={<TermsPage />} />
                   <Route path="/refund-policy" element={<RefundPolicyPage />} />
 
-                  <Route path="*" element={<NotFound />} />
+                  <Route path="*" element={<><NoIndex /><NotFound /></>} />
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>
