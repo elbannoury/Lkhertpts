@@ -2,7 +2,7 @@ import React from 'react';
 import Shell from '@/components/Shell';
 import AppLayout from '@/components/AppLayout';
 import SEO from '@/components/SEO';
-import { buildOrganizationJsonLd } from '@/lib/jsonld';
+import { buildOrganizationJsonLd, buildWebsiteJsonLd } from '@/lib/jsonld';
 import { useI18n } from '@/contexts/I18nContext';
 
 const Index: React.FC = () => {
@@ -19,7 +19,7 @@ const Index: React.FC = () => {
             : 'بيتسيكي تحوّل الجدران الفارغة إلى فن يلهم حياتك اليومية، بتجربة رقمية أنيقة وفاخرة متخصصة في اللوحات الجدارية والديكور، مع توصيل لكل مدن المغرب.'
         }
         path="/"
-        jsonLd={buildOrganizationJsonLd()}
+        jsonLd={[buildOrganizationJsonLd(), buildWebsiteJsonLd()]}
       />
       <AppLayout />
     </Shell>

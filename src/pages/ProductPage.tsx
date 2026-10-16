@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Truck, ShieldCheck, Star, AlertCircle } from 'lucide-react';
+import { Truck, Wallet, RotateCcw, ShieldCheck, AlertCircle } from 'lucide-react';
 import Shell from '@/components/Shell';
 import ProductCard from '@/components/ProductCard';
 import SEO from '@/components/SEO';
+import Breadcrumbs from '@/components/Breadcrumbs';
+import FAQSection from '@/components/FAQSection';
 import PaymentMethods from '@/components/PaymentMethods';
 import ProductDetails from '@/components/ProductDetails';
 import ProductReviews from '@/components/ProductReviews';
@@ -12,6 +14,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useI18n } from '@/contexts/I18nContext';
 import { formatMAD } from '@/data/catalog';
 import { buildProductJsonLd } from '@/lib/jsonld';
+import { FAQ_ITEMS, resolveFaq, productFaq, productDescription, productMetaDescription, formatSize, lowestPrice } from '@/lib/seoShared';
 
 // صورة احتياطية تُعرض إذا لم يتوفر للمنتج أي صورة في قاعدة البيانات
 // Fallback image shown when a product has no images in the database
@@ -35,6 +38,7 @@ const ProductPage: React.FC = () => {
   const [addons, setAddons] = useState<Record<string, boolean>>({});
   const [related, setRelated] = useState<any[]>([]);
   const [activeImage, setActiveImage] = useState(0);
+  const [ratingStats, setRatingStats] = useState<{ value: number; count: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +46,7 @@ const ProductPage: React.FC = () => {
     const run = async () => {
       setLoadState('loading');
       setProduct(null);
-      setSelectedVariant(null); setSize(''); setMaterial(''); setActiveImage(0);
+      setSelectedVariant(null); setSize(''); setMaterial(''); setActiveImage(0); setRatingStats(null);
 
       // إصلاح الخلل الحرج: كل استدعاء لـ Supabase محاط الآن بـ try/catch،
       // مع التحقق من الحقول الإجبارية (handle موجود، إلخ) بدلاً من ترك
@@ -175,6 +179,7 @@ const ProductPage: React.FC = () => {
   const allAddons = ((product.metadata?.addons || []) as any[]).filter((a) => a.enabled);
   const images: string[] = (product.images && product.images.length) ? product.images : [FALLBACK_IMAGE];
   const lifestyleImages: string[] = product.metadata?.lifestyle_images || [];
+  const l = en ? 'en' : 'ar';
 
   const pick = (s: string, m: string) => {
     const v = variants.find((x: any) => x.option1 === s && x.option2 === m);
@@ -184,14 +189,10 @@ const ProductPage: React.FC = () => {
   const onMat = (m: string) => { setMaterial(m); pick(size, m); };
   const toggleAddon = (label: string) => setAddons((p) => ({ ...p, [label]: !p[label] }));
 
-  // سعر كل حجم يُحسب من فرق سعر متغيّر (variant) المرتبط به مقارنة بأول
-  // متغيّر (الحجم الأساسي)، لعرض "+XX MAD" بجانب كل زر حجم كما هو مطلوب.
-  // Price delta per size, computed from each size's cheapest linked variant
-  // vs. the base (first) variant — shown as "+XX MAD" next to each size button.
-  const baseSizePrice = variants[0]?.price ?? product.price;
+  // Price shown on each size chip (absolute price — clearer than a "+XX" delta).
   const priceForSize = (s: string) => {
     const match = variants.find((v: any) => v.option1 === s);
-    return match ? match.price : baseSizePrice;
+    return match ? match.price : 0;
   };
 
   const addonTotal = allAddons.filter((a) => addons[a.label]).reduce((s, a) => s + (a.price || 0), 0);
@@ -222,41 +223,53 @@ const ProductPage: React.FC = () => {
     }, qty);
   };
 
-  const addToCartLabel = en ? 'Add to Cart' : 'أضف للسلة';
   const buttonLabel = priceUnavailable
     ? (en ? 'Currently Unavailable' : 'غير متوفر حالياً')
     : !inStock
       ? (en ? 'Sold Out' : 'نفدت الكمية')
       : missingSelection
         ? (en ? 'Select Options' : 'اختر الخيارات')
-        : addToCartLabel;
+        : (en ? 'Add to Cart' : 'أضف للسلة');
 
-  const productJsonLd = buildProductJsonLd({
-    name: product.name,
-    description: product.description,
-    image: images,
-    handle: product.handle,
-    price,
-    inStock,
-  });
+  const fromPrice = lowestPrice(product);
+  const description = productDescription(product, l);
+  const seoTitle = fromPrice
+    ? (en ? `${product.name} | Wall Art from ${Math.round(fromPrice / 100)} MAD` : `${product.name} | لوحة جدارية من ${Math.round(fromPrice / 100)} درهم`)
+    : product.name;
+  const faqItems = [
+    ...productFaq(product, l),
+    ...resolveFaq([FAQ_ITEMS[2], FAQ_ITEMS[3], FAQ_ITEMS[4], FAQ_ITEMS[5], FAQ_ITEMS[6]], l),
+  ];
 
   return (
     <Shell>
       <SEO
-        title={product.name}
-        description={product.description || `${product.name} — PITSIKY Wall Art`}
+        title={seoTitle}
+        description={productMetaDescription(product, l)}
         path={`/products/${product.handle}`}
         image={images[0]}
         type="product"
-        jsonLd={productJsonLd}
+        jsonLd={buildProductJsonLd(product, { rating: ratingStats || undefined })}
       />
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 md:py-12 grid md:grid-cols-2 gap-6 md:gap-12 lg:gap-20 pb-28 md:pb-12">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-5">
+        <Breadcrumbs
+          items={[
+            { label: en ? 'Home' : 'الرئيسية', path: '/' },
+            { label: en ? 'Shop' : 'المتجر', path: '/shop' },
+            { label: product.name, path: `/products/${product.handle}` },
+          ]}
+        />
+      </div>
+
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 md:py-10 grid md:grid-cols-2 gap-6 md:gap-12 lg:gap-20 pb-28 md:pb-12">
         <div className="md:sticky md:top-24 md:self-start">
-          <div className="bg-[#F2ECE6] rounded-sm overflow-hidden">
+          <div className="bg-[#F2ECE6] dark:bg-[#161616] rounded-2xl overflow-hidden shadow-[0_30px_60px_-34px_rgba(11,11,11,0.45)]">
             <img
               src={images[activeImage] || images[0]}
-              alt={`${product.name} | PITSIKY Wall Art`}
+              alt={`${product.name} — ${en ? 'wall art print by PITSIKY' : 'لوحة جدارية من بيتسيكي'}`}
+              fetchPriority="high"
+              decoding="async"
               onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE; }}
               className="w-full h-auto block"
             />
@@ -267,11 +280,14 @@ const ProductPage: React.FC = () => {
                 <button
                   key={i}
                   onClick={() => setActiveImage(i)}
-                  className={`bg-[#F2ECE6] rounded-sm overflow-hidden aspect-square flex items-center justify-center border transition-colors ${activeImage === i ? 'border-[#1D1D1D]' : 'border-transparent hover:border-[#ccc]'}`}
+                  aria-label={`${product.name} ${i + 1}`}
+                  className={`bg-[#F2ECE6] dark:bg-[#161616] rounded-xl overflow-hidden aspect-square flex items-center justify-center border-2 transition-colors ${activeImage === i ? 'border-[#FF6A00]' : 'border-transparent hover:border-[#FF6A00]/40'}`}
                 >
                   <img
                     src={img}
-                    alt={`${product.name} ${i + 1} | PITSIKY Wall Art`}
+                    alt={`${product.name} ${i + 1}`}
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE; }}
                     className="w-full h-full object-contain"
                   />
@@ -287,10 +303,11 @@ const ProductPage: React.FC = () => {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {lifestyleImages.map((img, i) => (
-                  <div key={i} className="bg-[#F2ECE6] rounded-sm overflow-hidden aspect-[4/3]">
+                  <div key={i} className="bg-[#F2ECE6] rounded-xl overflow-hidden aspect-[4/3]">
                     <img
                       src={img}
                       alt={`${product.name} ${en ? 'in a room setting' : 'في بيئة منزلية'} ${i + 1}`}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -301,31 +318,34 @@ const ProductPage: React.FC = () => {
         </div>
 
         <div>
-          <p className="text-xs tracking-[0.2em] uppercase text-[#a59f97] mb-2">{product.product_type}</p>
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1D1D1D] leading-tight">{product.name}</h1>
-          <div className="flex items-center gap-2 mt-3 text-[#FF6A00]">
-            {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
-            <span className="text-xs text-[#8D8D8D] ml-1">{en ? 'Loved by collectors' : 'يحبها هواة الفن'}</span>
+          {product.product_type && <p className="text-xs tracking-[0.2em] uppercase text-[#FF6A00] mb-2">{product.product_type}</p>}
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-[#1D1D1D] dark:text-[#F4F1E9] leading-tight">{product.name}</h1>
+
+          <div className="mt-5 flex items-baseline gap-3 flex-wrap">
+            <p className="text-3xl font-semibold text-[#1D1D1D] dark:text-[#F4F1E9]">
+              {priceUnavailable ? (en ? 'Price on request' : 'السعر عند الطلب') : formatMAD(price)}
+            </p>
+            {!priceUnavailable && (
+              <span className="text-xs text-[#1faa52] bg-[#1faa52]/10 rounded-full px-3 py-1">
+                {en ? 'Free delivery' : 'توصيل مجاني'}
+              </span>
+            )}
           </div>
-          <p className="text-2xl text-[#1D1D1D] mt-5">
-            {priceUnavailable ? (en ? 'Price on request' : 'السعر عند الطلب') : formatMAD(price)}
-          </p>
-          <p className="text-[#6b6b6b] leading-relaxed mt-6">{product.description}</p>
+
+          <p className="text-[#6b6b6b] dark:text-[#bdb9ad] leading-8 mt-5">{description}</p>
 
           {sizes.length > 0 && (
             <div className="mt-8">
-              <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">{en ? 'Size' : 'الحجم'}</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">{en ? 'Size' : 'المقاس'}</p>
+              <div className="flex flex-wrap gap-2.5">
                 {sizes.map((s) => {
                   const sPrice = priceForSize(s);
-                  const delta = sPrice - baseSizePrice;
+                  const selected = size === s;
                   return (
-                    <button key={s} onClick={() => onSize(s)}
-                      className={`px-4 py-2.5 text-sm border transition-colors flex flex-col items-center leading-tight ${size === s ? 'bg-[#1D1D1D] text-white border-[#1D1D1D]' : 'border-[#ddd] hover:border-[#6E44FF]'}`}>
-                      <span>{s}</span>
-                      {delta > 0 && (
-                        <span className={`text-[10px] ${size === s ? 'text-white/70' : 'text-[#8D8D8D]'}`}>+{formatMAD(delta)}</span>
-                      )}
+                    <button key={s} onClick={() => onSize(s)} aria-pressed={selected}
+                      className={`min-w-[108px] px-4 py-3 rounded-xl border-2 text-center transition-all ${selected ? 'border-[#FF6A00] bg-[#FF6A00]/10 shadow-[0_10px_24px_-14px_rgba(255,106,0,0.7)]' : 'border-[#e5ded3] dark:border-[#2a2a2a] hover:border-[#FF6A00]/60'}`}>
+                      <span className="block text-sm font-semibold text-[#1D1D1D] dark:text-[#F4F1E9]">{formatSize(s, l)}</span>
+                      {sPrice > 0 && <span className="block text-xs text-[#8D8D8D] mt-0.5">{formatMAD(sPrice)}</span>}
                     </button>
                   );
                 })}
@@ -336,10 +356,10 @@ const ProductPage: React.FC = () => {
           {materials.length > 0 && (
             <div className="mt-6">
               <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">{en ? 'Finish' : 'التشطيب'}</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {materials.map((m) => (
-                  <button key={m} onClick={() => onMat(m)}
-                    className={`px-4 py-2.5 text-sm border transition-colors ${material === m ? 'bg-[#1D1D1D] text-white border-[#1D1D1D]' : 'border-[#ddd] hover:border-[#6E44FF]'}`}>
+                  <button key={m} onClick={() => onMat(m)} aria-pressed={material === m}
+                    className={`px-4 py-3 text-sm rounded-xl border-2 transition-colors ${material === m ? 'border-[#FF6A00] bg-[#FF6A00]/10' : 'border-[#e5ded3] dark:border-[#2a2a2a] hover:border-[#FF6A00]/60'}`}>
                     {m}
                   </button>
                 ))}
@@ -350,12 +370,12 @@ const ProductPage: React.FC = () => {
           {allAddons.length > 0 && (
             <div className="mt-6">
               <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">{en ? 'Add-ons & Extras' : 'إضافات'}</p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {allAddons.map((a) => {
                   const on = addons[a.label];
                   return (
-                    <button key={a.label} onClick={() => toggleAddon(a.label)}
-                      className={`px-4 py-2.5 text-sm border rounded-lg transition-colors flex items-center gap-2 ${on ? 'bg-[#FF6A00] text-white border-[#FF6A00]' : 'border-[#ddd] hover:border-[#FF6A00]'}`}>
+                    <button key={a.label} onClick={() => toggleAddon(a.label)} aria-pressed={!!on}
+                      className={`px-4 py-3 text-sm border-2 rounded-xl transition-colors flex items-center gap-2 ${on ? 'bg-[#FF6A00] text-white border-[#FF6A00]' : 'border-[#e5ded3] dark:border-[#2a2a2a] hover:border-[#FF6A00]'}`}>
                       {a.label}
                       {a.price > 0 && <span className={`text-xs ${on ? 'text-white/85' : 'text-[#FF6A00]'}`}>+{formatMAD(a.price)}</span>}
                     </button>
@@ -367,24 +387,26 @@ const ProductPage: React.FC = () => {
 
           <div className="mt-6">
             <p className="text-xs tracking-[0.15em] uppercase text-[#8D8D8D] mb-3">{en ? 'Quantity' : 'الكمية'}</p>
-            <div className="inline-flex items-center border border-[#ddd]">
-              <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="px-4 py-2.5 md:py-2 text-lg md:text-base">−</button>
-              <span className="px-5">{qty}</span>
-              <button onClick={() => setQty((q) => q + 1)} className="px-4 py-2.5 md:py-2 text-lg md:text-base">+</button>
+            <div className="inline-flex items-center border-2 border-[#e5ded3] dark:border-[#2a2a2a] rounded-xl overflow-hidden">
+              <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="-" className="px-4 py-2.5 text-lg">−</button>
+              <span className="px-5 font-medium tabular-nums">{qty}</span>
+              <button onClick={() => setQty((q) => q + 1)} aria-label="+" className="px-4 py-2.5 text-lg">+</button>
             </div>
           </div>
 
           <PaymentMethods />
 
           <button onClick={add} disabled={missingSelection || !inStock || priceUnavailable}
-            className="hidden md:block w-full mt-6 bg-[#1D1D1D] text-white py-4 text-xs tracking-[0.25em] uppercase rounded-lg hover:bg-[#FF6A00] transition-colors disabled:opacity-40">
+            className="hidden md:block w-full mt-6 btn-pk py-4 text-sm disabled:opacity-40 disabled:pointer-events-none">
             {buttonLabel}
           </button>
 
-          <div className="mt-8 space-y-3 text-sm text-[#6b6b6b]">
-            <div className="flex items-center gap-3"><Truck size={17} className="text-[#FF6A00]" /> {en ? 'Free delivery in Morocco · 3–5 days' : 'توصيل مجاني في المغرب · 3-5 أيام'}</div>
-            <div className="flex items-center gap-3"><ShieldCheck size={17} className="text-[#FF6A00]" /> {en ? 'Secure checkout · Certificate included' : 'دفع آمن · شهادة أصالة مرفقة'}</div>
-          </div>
+          <ul className="mt-8 grid gap-3 text-sm text-[#5f5a52] dark:text-[#bdb9ad]">
+            <li className="flex items-center gap-3"><Truck size={18} className="text-[#FF6A00] shrink-0" /> {en ? 'Free delivery across Morocco · 3–5 business days' : 'توصيل مجاني لكل مدن المغرب · 3 إلى 5 أيام عمل'}</li>
+            <li className="flex items-center gap-3"><Wallet size={18} className="text-[#FF6A00] shrink-0" /> {en ? 'Pay 50% now, 50% on delivery' : 'ادفع 50% الآن و50% عند الاستلام'}</li>
+            <li className="flex items-center gap-3"><RotateCcw size={18} className="text-[#FF6A00] shrink-0" /> {en ? '7-day exchange · print quality guaranteed' : 'استبدال خلال 7 أيام · جودة الطباعة مضمونة'}</li>
+            <li className="flex items-center gap-3"><ShieldCheck size={18} className="text-[#FF6A00] shrink-0" /> {en ? 'Order confirmed by phone before production' : 'نؤكد طلبك هاتفياً قبل التنفيذ'}</li>
+          </ul>
 
           <ProductDetails
             dimensions={product.metadata?.dimensions}
@@ -395,22 +417,28 @@ const ProductPage: React.FC = () => {
 
       {/* Mobile-only sticky add-to-cart bar — keeps price + action reachable
           without the visitor having to scroll back up past the description. */}
-      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur border-t border-[#eee] px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
-        <span className="font-serif text-lg text-[#1D1D1D] shrink-0">
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0C0C0C]/95 backdrop-blur border-t border-[#eee] dark:border-[#222] px-4 py-3 flex items-center gap-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+        <span className="font-serif text-lg text-[#1D1D1D] dark:text-[#F4F1E9] shrink-0">
           {priceUnavailable ? (en ? 'N/A' : 'غ.م') : formatMAD(price)}
         </span>
         <button onClick={add} disabled={missingSelection || !inStock || priceUnavailable}
-          className="flex-1 bg-[#1D1D1D] text-white py-3.5 text-xs tracking-[0.2em] uppercase rounded-lg active:bg-[#FF6A00] transition-colors disabled:opacity-40">
+          className="flex-1 btn-pk py-3.5 text-sm disabled:opacity-40 disabled:pointer-events-none">
           {buttonLabel}
         </button>
       </div>
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10">
-        <ProductReviews productId={product.id} />
+        <ProductReviews productId={product.id} onStats={(v, c) => setRatingStats(c > 0 ? { value: v, count: c } : null)} />
       </div>
 
+      <FAQSection
+        eyebrow={en ? 'Good to know' : 'قبل أن تطلب'}
+        title={en ? 'Questions about this print' : 'أسئلة حول هذه اللوحة'}
+        items={faqItems}
+      />
+
       {related.length > 0 && (
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pb-24 mt-10">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pb-24 mt-6">
           <h2 className="font-serif text-2xl md:text-3xl mb-6 md:mb-10">{en ? 'You May Also Love' : 'قد يعجبك أيضاً'}</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-8 md:gap-y-12">
             {related.map((p) => <ProductCard key={p.id} product={p} />)}
