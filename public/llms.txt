@@ -1,0 +1,28 @@
+# PITSIKY Art Gallery (بيتسيكي)
+
+> PITSIKY (بيتسيكي) is a Moroccan online store for premium wall art and wall decor: high-quality art prints in multiple sizes starting from 249 MAD (30x40 cm), free delivery to every city in Morocco, and custom poster design on request. The site is Arabic-first and also available in English.
+
+## Key facts
+- Starting price: 249 MAD for a 30x40 cm print; larger sizes (40x60, 50x70, 60x90, 80x120 cm) cost more. Prices are in Moroccan dirhams (MAD / DH).
+- Delivery: free to all Moroccan cities, usually 3–5 business days after order confirmation.
+- Payment: 50% upfront to confirm the order, 50% on delivery. The team phones the customer to confirm.
+- Exchange: within 7 days of delivery if unused and in original packaging; damaged or misprinted items are replaced free of charge (report within 48 hours with a photo).
+- Custom designs: send an idea at https://www.pitsiky.com/custom or on WhatsApp +212 702 382 376.
+- Contact: hello@pitsiky.com · WhatsApp +212 702 382 376 · Casablanca, Morocco.
+
+## Shop
+- [All wall art](https://www.pitsiky.com/shop): the complete catalog with prices.
+- [Collections](https://www.pitsiky.com/collections): wall art grouped by theme (cars, anime, Islamic art, modern decor and more).
+- [Custom poster design](https://www.pitsiky.com/custom): order a personalised print.
+
+## Help & policies
+- [Refund & exchange policy](https://www.pitsiky.com/refund-policy)
+- [Track an order](https://www.pitsiky.com/track): enter the order number (format PIT-DDMMYY-001).
+- [Contact](https://www.pitsiky.com/contact)
+- [About PITSIKY](https://www.pitsiky.com/about)
+- [Privacy policy](https://www.pitsiky.com/privacy-policy)
+- [Terms of service](https://www.pitsiky.com/terms-of-service)
+
+## Optional
+- [Full catalog and FAQ for LLMs](https://www.pitsiky.com/llms-full.txt): every product with sizes and prices, regenerated at each build.
+- [Sitemap](https://www.pitsiky.com/sitemap.xml)
